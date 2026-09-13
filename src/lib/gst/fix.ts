@@ -1,13 +1,16 @@
 import { gstinState, normalizeGstin } from "./gstin.ts";
 import { lookupHsn } from "./hsn.ts";
-import { pinMatchesState, pinState, PIN_FOR_STATE } from "./pin.ts";
 import { money, type GstInvoice } from "./types.ts";
-import { validateGst } from "./validate.ts";
 
 function clone<T>(v: T): T {
   return structuredClone(v);
 }
 
+/**
+ * Conservative, deterministic formatting/arithmetic fixes only.
+ * Business-master values such as PIN, HSN classification and tax rate are
+ * never invented or overwritten from the incomplete local fixture.
+ */
 export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: string[] } {
   const inv = clone(input);
   const applied: string[] = [];
@@ -19,7 +22,22 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
   }
 
   if (inv.SellerDtls?.Gstin) {
-    inv.SellerDtls.Gstin = normalizeGstin(inv.SellerDtls.Gstin);
+    const normalized = normalizeGstin(inv.SellerDtls.Gstin);
+    if (normalized !== inv.SellerDtls.Gstin) {
+      inv.SellerDtls.Gstin = normalized;
+      applied.push("Normalised seller GSTIN formatting");
+    }
+  }
+  if (inv.BuyerDtls?.Gstin) {
+    const normalized = normalizeGstin(inv.BuyerDtls.Gstin);
+    if (normalized !== inv.BuyerDtls.Gstin) {
+      inv.BuyerDtls.Gstin = normalized;
+      applied.push("Normalised buyer GSTIN formatting");
+    }
+  }
+
+  // GSTIN-derived state is deterministic and safe to normalise.
+  if (inv.SellerDtls?.Gstin) {
     const st = gstinState(inv.SellerDtls.Gstin);
     if (st && inv.SellerDtls.Stcd !== st) {
       inv.SellerDtls.Stcd = st;
@@ -27,51 +45,27 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
     }
   }
   if (inv.BuyerDtls?.Gstin) {
-    inv.BuyerDtls.Gstin = normalizeGstin(inv.BuyerDtls.Gstin);
     const st = gstinState(inv.BuyerDtls.Gstin);
     if (st && inv.BuyerDtls.Stcd !== st) {
       inv.BuyerDtls.Stcd = st;
       applied.push(`Buyer Stcd set to ${st} from GSTIN`);
     }
-    if (!inv.BuyerDtls.Pos) inv.BuyerDtls.Pos = inv.BuyerDtls.Stcd;
-  }
-
-  const sellerPinState = pinState(inv.SellerDtls?.Pin);
-  if (inv.SellerDtls && !pinMatchesState(inv.SellerDtls.Pin, inv.SellerDtls.Stcd)) {
-    const next = PIN_FOR_STATE[inv.SellerDtls.Stcd];
-    if (next) {
-      inv.SellerDtls.Pin = next;
-      applied.push(
-        `Seller PIN ${sellerPinState ? "was in another state" : "invalid"} — set to ${next} for state ${inv.SellerDtls.Stcd}. Confirm the real address PIN.`,
-      );
-    }
-  }
-  if (inv.BuyerDtls && inv.BuyerDtls.Stcd && !pinMatchesState(inv.BuyerDtls.Pin, inv.BuyerDtls.Stcd)) {
-    const next = PIN_FOR_STATE[inv.BuyerDtls.Stcd];
-    if (next) {
-      inv.BuyerDtls.Pin = next;
-      applied.push(`Buyer PIN set to ${next} for state ${inv.BuyerDtls.Stcd}. Confirm the real address PIN.`);
+    if (!inv.BuyerDtls.Pos && st) {
+      inv.BuyerDtls.Pos = st;
+      applied.push(`Buyer Pos set to ${st} from buyer GSTIN state`);
     }
   }
 
-  const pos = inv.BuyerDtls?.Pos || inv.BuyerDtls?.Stcd;
-  const intra = gstinState(inv.SellerDtls?.Gstin ?? "") === pos;
-
+  // Never replace an address PIN: a representative PIN can corrupt customer data.
+  // Never alter HSN rate/service: the local fixture is incomplete/non-authoritative.
   for (const it of inv.ItemList ?? []) {
-    const row = lookupHsn(it.HsnCd);
-    if (row) {
-      if (it.GstRt !== row.rate) {
-        it.GstRt = row.rate;
-        applied.push(`HSN ${it.HsnCd}: GST rate set to ${row.rate}%`);
-      }
-      const servc = row.service ? "Y" : "N";
-      if (it.IsServc !== servc) {
-        it.IsServc = servc;
-        applied.push(`HSN ${it.HsnCd}: IsServc set to ${servc}`);
-      }
-    }
+    // Exact lookup is intentionally informational only; no business data is changed.
+    void lookupHsn(it.HsnCd);
     it.TotAmt = money(it.Qty * it.UnitPrice);
     it.AssAmt = money(it.TotAmt - (it.Discount || 0));
+
+    const pos = inv.BuyerDtls?.Pos || inv.BuyerDtls?.Stcd;
+    const intra = gstinState(inv.SellerDtls?.Gstin ?? "") === pos;
     const tax = money(it.AssAmt * (it.GstRt / 100));
     if (intra) {
       it.CgstAmt = money(tax / 2);
@@ -106,7 +100,7 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
   if (Math.abs(diff) <= 99.99 && Math.abs(diff) > 0.001) {
     inv.ValDtls.RndOffAmt = diff;
     applied.push(`Round-off set to ${diff.toFixed(2)} so TotInvVal reconciles`);
-  } else {
+  } else if (Math.abs(diff) > 0.001) {
     inv.ValDtls.RndOffAmt = 0;
     inv.ValDtls.TotInvVal = beforeRound;
     applied.push(`TotInvVal recalculated to ${beforeRound.toFixed(2)}`);
@@ -115,6 +109,5 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
   if (intra) applied.push("Intra-state: IGST cleared, CGST/SGST split");
   else applied.push("Inter-state: CGST/SGST cleared, IGST applied");
 
-  validateGst(inv);
   return { invoice: inv, applied };
 }
