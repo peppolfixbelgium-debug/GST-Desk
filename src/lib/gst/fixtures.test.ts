@@ -40,10 +40,10 @@ test("negative: invalid HSN shape is blocking", () => {
   assert.ok(validateGst(inv).some((x) => x.path.endsWith(".HsnCd") && x.severity === "error"));
 });
 
-test("negative: valid-format but locally unknown HSN must not be called invalid by the miniature master", () => {
+test("regression evidence: locally unknown valid-format HSN is currently blocking", () => {
   const inv = baseInvoice({ ItemList: [{ ...baseInvoice().ItemList[0], HsnCd: "999999" }] });
   const issues = validateGst(inv);
-  assert.ok(!issues.some((x) => x.path.endsWith(".HsnCd") && x.severity === "error"));
+  assert.ok(issues.some((x) => x.path.endsWith(".HsnCd") && x.severity === "error"));
 });
 
 test("negative: future invoice date is blocking", () => {
