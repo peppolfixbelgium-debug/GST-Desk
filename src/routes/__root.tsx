@@ -14,7 +14,7 @@ export const Route = createRootRoute({
       {
         name: "description",
         content:
-          "Fix NIC GST e-invoice errors. Validate HSN, PIN and round-off, then download IRN-ready JSON for your GSP.",
+          "Validate and correct GST e-invoice JSON locally. Download JSON that passed GST Desk validation checks; IRP acceptance and IRN issuance are separate.",
       },
       { name: "theme-color", content: "#0f5c4c" },
     ],
