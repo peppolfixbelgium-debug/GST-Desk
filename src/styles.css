@@ -1,0 +1,59 @@
+@import "tailwindcss";
+
+@custom-variant dark (&:where(.dark, .dark *));
+
+@theme {
+  --color-bg: #f3efe6;
+  --color-fg: #1a1c16;
+  --color-muted: #5c5e56;
+  --color-surface: #fffcf6;
+  --color-line: #ddd8cc;
+  --color-accent: #0d5c4d;
+  --color-accent-fg: #f3efe6;
+  --color-danger: #8b2e2e;
+  --font-display: "Iowan Old Style", Palatino, "Palatino Linotype", Georgia, serif;
+  --font-sans: "Segoe UI", system-ui, -apple-system, sans-serif;
+  --font-mono: ui-monospace, "SF Mono", Menlo, Consolas, monospace;
+  --radius-sm: 8px;
+  --radius-md: 12px;
+  --radius-lg: 20px;
+}
+
+.dark {
+  --color-bg: #12140f;
+  --color-fg: #ece8dc;
+  --color-muted: #9a9c92;
+  --color-surface: #1c1e18;
+  --color-line: #2e3228;
+  --color-accent: #7dbaa8;
+  --color-accent-fg: #12140f;
+  --color-danger: #e08b8b;
+}
+
+@layer base {
+  html {
+    font-family: var(--font-sans);
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+  body {
+    min-height: 100dvh;
+    background: var(--color-bg);
+    color: var(--color-fg);
+  }
+  button:not(:disabled),
+  [role="button"]:not(:disabled) {
+    cursor: pointer;
+  }
+  h1, h2, h3 {
+    font-family: var(--font-display);
+    letter-spacing: -0.03em;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  *, *::before, *::after {
+    animation-duration: 0.01ms !important;
+    transition-duration: 0.01ms !important;
+  }
+}

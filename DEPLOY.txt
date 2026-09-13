@@ -1,0 +1,16 @@
+GST Desk — deploy (Vercel + Postgres/Supabase)
+
+India GST e-invoice fixer. Sign-in required. 5 free invoices per calendar month.
+
+1. Node.js 22
+2. npm install
+3. .env.local:
+
+   DATABASE_URL=postgresql://...supabase...:6543/postgres?sslmode=require
+   BETTER_AUTH_SECRET=long-random-string
+   BETTER_AUTH_URL=https://your-domain.vercel.app
+   VITE_AUTH_ENABLED=true
+
+4. npm run build
+5. Same env vars on Vercel. Build command: npm run build. Node 22.
+6. git push or npx vercel --prod --yes
