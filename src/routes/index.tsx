@@ -63,9 +63,9 @@ function Home() {
         <h2 className="text-3xl">Common rejection guides</h2>
         <p className="mt-2 max-w-2xl text-sm text-muted">Start with the error code you received. These pages explain the rejection and point back to the fixer without implying guaranteed IRP acceptance.</p>
         <div className="mt-6 flex flex-wrap gap-2 text-sm">
-          <Link className="rounded-md border border-line px-3 py-2 hover:border-accent" to="/gst-e-invoice-errors/2176">2176 — HSN invalid</Link>
-          <Link className="rounded-md border border-line px-3 py-2 hover:border-accent" to="/gst-e-invoice-errors/3039">3039 — PIN/state mismatch</Link>
-          <Link className="rounded-md border border-line px-3 py-2 hover:border-accent" to="/gst-e-invoice-errors/2189">2189 — total invoice value</Link>
+          <a className="rounded-md border border-line px-3 py-2 hover:border-accent" href="/gst-e-invoice-errors/2176">2176 — HSN invalid</a>
+          <a className="rounded-md border border-line px-3 py-2 hover:border-accent" href="/gst-e-invoice-errors/3039">3039 — PIN/state mismatch</a>
+          <a className="rounded-md border border-line px-3 py-2 hover:border-accent" href="/gst-e-invoice-errors/2189">2189 — total invoice value</a>
         </div>
       </section>
 
