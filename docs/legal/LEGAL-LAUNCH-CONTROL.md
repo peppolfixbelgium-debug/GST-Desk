@@ -17,6 +17,17 @@ This document is an operational control register, not legal or tax advice. Quali
 - [ ] Security page contains only controls supported by production evidence.
 - [ ] Payment/cancellation/refund/tax terms are approved before paid checkout is enabled.
 
+## Executed controls — 24-hour sprint
+
+| Control | Evidence | Result |
+|---|---|---|
+| Remove unsupported NIC/GSP/IRN marketing wording from homepage | Commit `d3d85df217bd424cb5d6df8d2b85023bd7fb892a` — `src/routes/index.tsx` | Applied; needs PMO/production verification |
+| Remove “GSP-adjacent volume” pricing language | Commit `a1dbf536f25703cf62211377c03586be27ed6bb6` — `src/lib/gst/pricing.ts` | Applied; needs PMO/production verification |
+| Harden Terms boundaries | Commit `33cb26a1082515dba3af37df574cbebd2ca0f9da` — `src/routes/terms.tsx` | Applied; counsel approval pending |
+| Harden Privacy claims | Commit `a05d28285f6d1c50eea3dc941af8c09b9f599608` — `src/routes/privacy.tsx` | Applied; architecture reconciliation pending |
+| Reduce unverified Security claims | Commit `8192372bd8d2f9142e31c32f24c4058b43043476` — `src/routes/security.tsx` | Applied; production verification pending |
+| Correct root metadata IRN wording | Commit `9aae9df223f0dd5d1435f8faa2b2f9412ae78d74` — `src/routes/__root.tsx` | Applied; needs PMO/production verification |
+
 ## Mandatory public-claim boundaries
 
 ### IRN-ready
@@ -47,7 +58,7 @@ Do not use “NIC said…” or similar attribution unless the exact source is c
 
 ### Marketing
 
-Remove “GSP-adjacent volume” and similar language that could blur GST Desk’s regulatory role.
+Do not use “GSP-adjacent volume” or similar language that could blur GST Desk’s regulatory role.
 
 ## Data claims
 
