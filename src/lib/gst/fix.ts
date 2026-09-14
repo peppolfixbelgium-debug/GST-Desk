@@ -48,7 +48,7 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
     const st = gstinState(inv.BuyerDtls.Gstin);
     if (st && inv.BuyerDtls.Stcd !== st) {
       inv.BuyerDtls.Stcd = st;
-      applied.push(`Buyer Stcd set to ${st} from GSTIN`);
+      applied.push(`Buyer Stcd set to ${st} from buyer GSTIN state`);
     }
     if (!inv.BuyerDtls.Pos && st) {
       inv.BuyerDtls.Pos = st;
@@ -58,16 +58,16 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
 
   // Never replace an address PIN: a representative PIN can corrupt customer data.
   // Never alter HSN rate/service: the local fixture is incomplete/non-authoritative.
+  const pos = inv.BuyerDtls?.Pos || inv.BuyerDtls?.Stcd;
+  const intraState = gstinState(inv.SellerDtls?.Gstin ?? "") === pos;
   for (const it of inv.ItemList ?? []) {
     // Exact lookup is intentionally informational only; no business data is changed.
     void lookupHsn(it.HsnCd);
     it.TotAmt = money(it.Qty * it.UnitPrice);
     it.AssAmt = money(it.TotAmt - (it.Discount || 0));
 
-    const pos = inv.BuyerDtls?.Pos || inv.BuyerDtls?.Stcd;
-    const intra = gstinState(inv.SellerDtls?.Gstin ?? "") === pos;
     const tax = money(it.AssAmt * (it.GstRt / 100));
-    if (intra) {
+    if (intraState) {
       it.CgstAmt = money(tax / 2);
       it.SgstAmt = money(tax / 2);
       it.IgstAmt = 0;
@@ -106,7 +106,7 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
     applied.push(`TotInvVal recalculated to ${beforeRound.toFixed(2)}`);
   }
 
-  if (intra) applied.push("Intra-state: IGST cleared, CGST/SGST split");
+  if (intraState) applied.push("Intra-state: IGST cleared, CGST/SGST split");
   else applied.push("Inter-state: CGST/SGST cleared, IGST applied");
 
   return { invoice: inv, applied };
