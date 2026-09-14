@@ -28,6 +28,7 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     if (dt > today) out.push(issue("2163", "DocDtls.Dt"));
   }
   if (!inv.DocDtls?.No?.trim()) out.push({ code: "2002", path: "DocDtls.No", nic: "Document number missing", hint: "Invoice number is mandatory.", severity: "error" });
+  else if (!/^[A-Za-z0-9\/-]+$/.test(inv.DocDtls.No.trim())) out.push({ code: "2002", path: "DocDtls.No", nic: "Document number contains unsupported characters", hint: "Use the permitted invoice-number characters for the current e-invoice schema; uniqueness is checked separately by the taxpayer/system.", severity: "error" });
 
   const seller = inv.SellerDtls, buyer = inv.BuyerDtls;
   if (!gstinOk(seller?.Gstin ?? "")) out.push({ code: "2190", path: "SellerDtls.Gstin", nic: "Invalid GSTIN", hint: "Seller GSTIN failed the 15-character checksum.", severity: "error" });
@@ -87,7 +88,7 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     if (Math.abs(v.RndOffAmt) > 99.99) out.push({ code: "2189", path: "ValDtls.RndOffAmt", nic: "Round off out of range", hint: "RndOffAmt must be between -99.99 and 99.99.", severity: "error", fix: "round-off" });
   }
   const value = v?.TotInvVal ?? 0;
-  if (value >= 50000) out.push({ code: "EWB", path: "EwbDtls", nic: "E-way bill likely required", hint: "Invoice value is ₹50,000 or more. Attach transporter and distance when you file the e-way bill.", severity: "warning" });
+  if (value >= 50000) out.push({ code: "EWB", path: "EwbDtls", nic: "E-way bill threshold reached", hint: "Invoice value is ₹50,000 or more; e-way bill applicability depends on the transaction and current e-way bill rules. Do not treat this warning as proof that an e-way bill is required.", severity: "warning" });
   return out;
 }
 
