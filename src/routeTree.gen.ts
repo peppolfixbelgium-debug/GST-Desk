@@ -20,6 +20,9 @@ import { Route as SecurityRouteImport } from './routes/security'
 import { Route as TermsRouteImport } from './routes/terms'
 import { Route as ValidateRouteImport } from './routes/validate'
 import { Route as ApiAuthSplatRouteImport } from './routes/api/auth/$'
+import { Route as GstEInvoiceErrors2176RouteImport } from './routes/gst-e-invoice-errors/2176'
+import { Route as GstEInvoiceErrors2189RouteImport } from './routes/gst-e-invoice-errors/2189'
+import { Route as GstEInvoiceErrors3039RouteImport } from './routes/gst-e-invoice-errors/3039'
 
 const IndexRoute = IndexRouteImport.update({
   id: '/',
@@ -76,6 +79,21 @@ const ApiAuthSplatRoute = ApiAuthSplatRouteImport.update({
   path: '/api/auth/$',
   getParentRoute: () => rootRouteImport,
 } as any)
+const GstEInvoiceErrors2176Route = GstEInvoiceErrors2176RouteImport.update({
+  id: '/gst-e-invoice-errors/2176',
+  path: '/gst-e-invoice-errors/2176',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GstEInvoiceErrors2189Route = GstEInvoiceErrors2189RouteImport.update({
+  id: '/gst-e-invoice-errors/2189',
+  path: '/gst-e-invoice-errors/2189',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const GstEInvoiceErrors3039Route = GstEInvoiceErrors3039RouteImport.update({
+  id: '/gst-e-invoice-errors/3039',
+  path: '/gst-e-invoice-errors/3039',
+  getParentRoute: () => rootRouteImport,
+} as any)
 
 export interface FileRoutesByFullPath {
   '/': typeof IndexRoute
@@ -89,6 +107,9 @@ export interface FileRoutesByFullPath {
   '/terms': typeof TermsRoute
   '/validate': typeof ValidateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/gst-e-invoice-errors/2176': typeof GstEInvoiceErrors2176Route
+  '/gst-e-invoice-errors/2189': typeof GstEInvoiceErrors2189Route
+  '/gst-e-invoice-errors/3039': typeof GstEInvoiceErrors3039Route
 }
 export interface FileRoutesByTo {
   '/': typeof IndexRoute
@@ -102,6 +123,9 @@ export interface FileRoutesByTo {
   '/terms': typeof TermsRoute
   '/validate': typeof ValidateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/gst-e-invoice-errors/2176': typeof GstEInvoiceErrors2176Route
+  '/gst-e-invoice-errors/2189': typeof GstEInvoiceErrors2189Route
+  '/gst-e-invoice-errors/3039': typeof GstEInvoiceErrors3039Route
 }
 export interface FileRoutesById {
   __root__: typeof rootRouteImport
@@ -116,6 +140,9 @@ export interface FileRoutesById {
   '/terms': typeof TermsRoute
   '/validate': typeof ValidateRoute
   '/api/auth/$': typeof ApiAuthSplatRoute
+  '/gst-e-invoice-errors/2176': typeof GstEInvoiceErrors2176Route
+  '/gst-e-invoice-errors/2189': typeof GstEInvoiceErrors2189Route
+  '/gst-e-invoice-errors/3039': typeof GstEInvoiceErrors3039Route
 }
 export interface FileRouteTypes {
   fileRoutesByFullPath: FileRoutesByFullPath
@@ -131,6 +158,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/validate'
     | '/api/auth/$'
+    | '/gst-e-invoice-errors/2176'
+    | '/gst-e-invoice-errors/2189'
+    | '/gst-e-invoice-errors/3039'
   fileRoutesByTo: FileRoutesByTo
   to:
     | '/'
@@ -144,6 +174,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/validate'
     | '/api/auth/$'
+    | '/gst-e-invoice-errors/2176'
+    | '/gst-e-invoice-errors/2189'
+    | '/gst-e-invoice-errors/3039'
   id:
     | '__root__'
     | '/'
@@ -157,6 +190,9 @@ export interface FileRouteTypes {
     | '/terms'
     | '/validate'
     | '/api/auth/$'
+    | '/gst-e-invoice-errors/2176'
+    | '/gst-e-invoice-errors/2189'
+    | '/gst-e-invoice-errors/3039'
   fileRoutesById: FileRoutesById
 }
 export interface RootRouteChildren {
@@ -171,6 +207,9 @@ export interface RootRouteChildren {
   TermsRoute: typeof TermsRoute
   ValidateRoute: typeof ValidateRoute
   ApiAuthSplatRoute: typeof ApiAuthSplatRoute
+  GstEInvoiceErrors2176Route: typeof GstEInvoiceErrors2176Route
+  GstEInvoiceErrors2189Route: typeof GstEInvoiceErrors2189Route
+  GstEInvoiceErrors3039Route: typeof GstEInvoiceErrors3039Route
 }
 
 declare module '@tanstack/react-router' {
@@ -252,6 +291,27 @@ declare module '@tanstack/react-router' {
       preLoaderRoute: typeof ApiAuthSplatRouteImport
       parentRoute: typeof rootRouteImport
     }
+    '/gst-e-invoice-errors/2176': {
+      id: '/gst-e-invoice-errors/2176'
+      path: '/gst-e-invoice-errors/2176'
+      fullPath: '/gst-e-invoice-errors/2176'
+      preLoaderRoute: typeof GstEInvoiceErrors2176RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gst-e-invoice-errors/2189': {
+      id: '/gst-e-invoice-errors/2189'
+      path: '/gst-e-invoice-errors/2189'
+      fullPath: '/gst-e-invoice-errors/2189'
+      preLoaderRoute: typeof GstEInvoiceErrors2189RouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/gst-e-invoice-errors/3039': {
+      id: '/gst-e-invoice-errors/3039'
+      path: '/gst-e-invoice-errors/3039'
+      fullPath: '/gst-e-invoice-errors/3039'
+      preLoaderRoute: typeof GstEInvoiceErrors3039RouteImport
+      parentRoute: typeof rootRouteImport
+    }
   }
 }
 
@@ -267,6 +327,9 @@ const rootRouteChildren: RootRouteChildren = {
   TermsRoute: TermsRoute,
   ValidateRoute: ValidateRoute,
   ApiAuthSplatRoute: ApiAuthSplatRoute,
+  GstEInvoiceErrors2176Route: GstEInvoiceErrors2176Route,
+  GstEInvoiceErrors2189Route: GstEInvoiceErrors2189Route,
+  GstEInvoiceErrors3039Route: GstEInvoiceErrors3039Route,
 }
 export const routeTree = rootRouteImport
   ._addFileChildren(rootRouteChildren)
