@@ -48,7 +48,7 @@ function FixerPage() {
   const onFix = () => {
     if (!invoice) return;
     const result = autoFix(invoice);
-    trackAcquisition({ event: "fix_run", fixCategory: result.applied.join(", ").slice(0, 120) || "none" });
+    trackAcquisition({ event: "fix_run", fixCategory: result.applied.length ? "supported_fix_applied" : "no_change" });
     setInvoice(result.invoice); setRaw(pretty(result.invoice)); setApplied(result.applied);
   };
 
