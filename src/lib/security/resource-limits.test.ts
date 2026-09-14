@@ -29,11 +29,9 @@ test("rejects an oversized bulk member", () => {
 });
 
 test("rejects oversized aggregate bulk input", () => {
-  assert.match(
-    validateBulkFiles([
-      { size: MAX_BULK_TOTAL_BYTES / 2 + 1 },
-      { size: MAX_BULK_TOTAL_BYTES / 2 + 1 },
-    ]) ?? "",
-    /20 MiB total/,
-  );
+  const memberSize = Math.floor(MAX_BULK_JSON_BYTES * 0.95);
+  const files = Array.from({ length: 11 }, () => ({ size: memberSize }));
+  assert.ok(files.every((file) => file.size <= MAX_BULK_JSON_BYTES));
+  assert.ok(files.reduce((sum, file) => sum + file.size, 0) > MAX_BULK_TOTAL_BYTES);
+  assert.match(validateBulkFiles(files) ?? "", /20 MiB total/);
 });
