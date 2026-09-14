@@ -1,7 +1,10 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GstErrorGuide } from "@/components/seo/error-guide";
 
-export const Route = createFileRoute("/gst-e-invoice-errors/2189" as never)({
+// The checked-in route tree is generated during the app build; this source file
+// is valid at runtime even when standalone tsc sees the pre-generation type map.
+// @ts-expect-error generated FileRoutesByPath can lag behind source route files.
+export const Route = createFileRoute("/gst-e-invoice-errors/2189")({
   head: () => ({
     meta: [
       { title: "GST e-invoice error 2189 — invalid total invoice value | GST Desk" },
