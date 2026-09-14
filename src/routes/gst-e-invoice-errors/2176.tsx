@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GstErrorGuide } from "@/components/seo/error-guide";
 
-export const Route = createFileRoute("/gst-e-invoice-errors/2176")({
+export const Route = createFileRoute("/gst-e-invoice-errors/2176" as never)({
   head: () => ({
     meta: [
       { title: "GST e-invoice error 2176 — HSN code invalid | GST Desk" },
