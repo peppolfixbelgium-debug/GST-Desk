@@ -11,14 +11,14 @@ function Home() {
   return (
     <Shell>
       <section className="mx-auto max-w-6xl px-4 pb-20 pt-16">
-        <p className="text-xs uppercase tracking-[0.2em] text-muted">India · GST e-invoice · IRN</p>
+        <p className="text-xs uppercase tracking-[0.2em] text-muted">India · GST e-invoice · IRP validation</p>
         <h1 className="mt-4 max-w-3xl text-4xl leading-[1.1] text-fg md:text-6xl">
-          NIC said “HSN invalid as per GST rate”. We say what to change.
+          Turn common GST e-invoice validation errors into clear fixes.
         </h1>
         <p className="mt-5 max-w-xl text-base leading-relaxed text-muted">
-          Paste the rejected e-invoice JSON. GST Desk maps IRP error codes to a human fix, corrects HSN, PIN-state
-          and round-off, then gives you JSON ready for IRN. We are not a GSP — you file through NIC or ClearTax /
-          HostBooks.
+          Paste the rejected e-invoice JSON. GST Desk maps supported IRP error codes to a human fix, corrects HSN,
+          PIN-state and round-off issues, then gives you JSON that passed GST Desk validation checks. GST Desk is not a
+          GSP or IRP and does not file invoices or obtain IRNs for you.
         </p>
         <div className="mt-8 flex flex-wrap gap-3">
           <SignedOut>
@@ -46,17 +46,17 @@ function Home() {
             {
               icon: FileJson,
               title: "Paste the payload",
-              body: "Tally / Busy / ClearTax JSON, or a broken sample with the usual NIC failures.",
+              body: "Tally / Busy / accounting JSON, or a broken sample with common e-invoice validation failures.",
             },
             {
               icon: ListChecks,
               title: "Read the IRP codes",
-              body: "2176, 3039, 2189, 2172 — each with the field, the portal line, and a fix.",
+              body: "Supported codes such as 2176, 3039, 2189 and 2172 — with the field and a suggested fix.",
             },
             {
               icon: Wrench,
-              title: "Auto-fix and download",
-              body: "HSN rate, PIN vs GSTIN state, CGST/IGST split, round-off ±99.99. Then IRN-ready JSON.",
+              title: "Correct and download",
+              body: "HSN rate, PIN vs GSTIN state, CGST/IGST split and supported round-off corrections. Download the validated JSON.",
             },
           ].map((s) => (
             <div key={s.title} className="rounded-lg border border-line bg-bg p-6">
