@@ -5,7 +5,7 @@ export const PRICING = [
     price: 0,
     invoices: 5,
     blurb: "For a practice testing real IRP JSON.",
-    features: ["5 invoices / calendar month", "NIC error mapping", "HSN + PIN auto-fix", "EN / हिन्दी"],
+    features: ["5 invoices / calendar month", "Supported IRP error mapping", "HSN + PIN auto-fix", "EN / हिन्दी"],
     cta: "Start free",
   },
   {
@@ -32,7 +32,7 @@ export const PRICING = [
     name: "Practice",
     price: 4999,
     invoices: 1500,
-    blurb: "GSP-adjacent volume.",
+    blurb: "For higher-volume validation workflows.",
     features: ["1,500 invoices / month", "Bulk ZIP", "Named contact", "SLA on request"],
     cta: "Choose Practice",
   },
