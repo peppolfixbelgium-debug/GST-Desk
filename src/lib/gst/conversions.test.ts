@@ -6,8 +6,10 @@ const source = readFileSync(new URL("./conversions.ts", import.meta.url), "utf8"
 const saveHandler = source.slice(source.indexOf("export const saveConversion"));
 
 test("conversion writes use the database atomic quota primitive", () => {
-  assert.match(saveHandler, /public\.consume_conversion/);
-  assert.doesNotMatch(saveHandler, /const countRows = await sql<\{ n: number \}>`\s*select count\(\*\)/);
+  const consumeIndex = saveHandler.indexOf("public.consume_conversion");
+  assert.ok(consumeIndex >= 0, "saveConversion must consume quota through the database primitive");
+  const beforeConsume = saveHandler.slice(0, consumeIndex);
+  assert.doesNotMatch(beforeConsume, /select count\(\*\)/i, "quota must not be checked with a separate count before the atomic write");
 });
 
 test("conversion reads remain explicitly scoped to the authenticated user", () => {
