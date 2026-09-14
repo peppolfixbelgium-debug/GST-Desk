@@ -3,10 +3,11 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const source = readFileSync(new URL("./conversions.ts", import.meta.url), "utf8");
+const saveHandler = source.slice(source.indexOf("export const saveConversion"));
 
 test("conversion writes use the database atomic quota primitive", () => {
-  assert.match(source, /public\.consume_conversion/);
-  assert.doesNotMatch(source, /const countRows = await sql<\{ n: number \}>`\s*select count\(\*\)/);
+  assert.match(saveHandler, /public\.consume_conversion/);
+  assert.doesNotMatch(saveHandler, /const countRows = await sql<\{ n: number \}>`\s*select count\(\*\)/);
 });
 
 test("conversion reads remain explicitly scoped to the authenticated user", () => {
