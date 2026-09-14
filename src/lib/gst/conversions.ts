@@ -82,6 +82,20 @@ export const saveConversion = createServerFn({ method: "POST" })
   .validator((data: { invoiceId: string; supplier: string; customer: string; total: string; currency: string; status: string }) => data)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
+    const inserted = await sql<{ id: number }>`
+      select public.consume_conversion(
+        ${context.userId},
+        ${data.invoiceId},
+        ${data.supplier},
+        ${data.customer},
+        ${data.total},
+        ${data.currency},
+        ${data.status},
+        ${FREE_MONTHLY_LIMIT}
+      ) as id
+    `;
+    const id = Number(inserted[0]?.id ?? 0);
+    if (!id) throw new Error("Conversion could not be saved.");
     const countRows = await sql<{ n: number }>`
       select count(*)::int as n
       from conversions
@@ -89,21 +103,5 @@ export const saveConversion = createServerFn({ method: "POST" })
         and created_at >= date_trunc('month', now())
     `;
     const used = Number(countRows[0]?.n ?? 0);
-    if (used >= FREE_MONTHLY_LIMIT) {
-      throw new Error("Monthly free quota reached. It resets on the 1st of next month.");
-    }
-    const inserted = await sql<{ id: number }>`
-      insert into conversions (user_id, invoice_id, supplier, customer, total, currency, status)
-      values (
-        ${context.userId},
-        ${data.invoiceId},
-        ${data.supplier},
-        ${data.customer},
-        ${data.total},
-        ${data.currency},
-        ${data.status}
-      )
-      returning id
-    `;
-    return { id: inserted[0]?.id ?? 0, used: used + 1, remaining: FREE_MONTHLY_LIMIT - used - 1 };
+    return { id, used, remaining: Math.max(0, FREE_MONTHLY_LIMIT - used) };
   });
