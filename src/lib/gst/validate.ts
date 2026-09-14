@@ -1,5 +1,5 @@
 import { NIC } from "./errors.ts";
-import { gstinOk, gstinState, normalizeGstin } from "./gstin.ts";
+import { gstinOk, gstinState } from "./gstin.ts";
 import { hsnFormatOk, lookupHsn, UQC } from "./hsn.ts";
 import { checkPinState, pinOk } from "./pin.ts";
 import { STATES } from "./states.ts";
@@ -28,7 +28,7 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     if (dt > today) out.push(issue("2163", "DocDtls.Dt"));
   }
   if (!inv.DocDtls?.No?.trim()) out.push({ code: "2002", path: "DocDtls.No", nic: "Document number missing", hint: "Invoice number is mandatory.", severity: "error" });
-  else if (!/^[A-Za-z0-9\/-]+$/.test(inv.DocDtls.No.trim())) out.push({ code: "2002", path: "DocDtls.No", nic: "Document number contains unsupported characters", hint: "Use the permitted invoice-number characters for the current e-invoice schema; uniqueness is checked separately by the taxpayer/system.", severity: "error" });
+  else if (!/^[A-Za-z0-9/-]+$/.test(inv.DocDtls.No.trim())) out.push({ code: "2002", path: "DocDtls.No", nic: "Document number contains unsupported characters", hint: "Use the permitted invoice-number characters for the current e-invoice schema; uniqueness is checked separately by the taxpayer/system.", severity: "error" });
 
   const seller = inv.SellerDtls, buyer = inv.BuyerDtls;
   if (!gstinOk(seller?.Gstin ?? "")) out.push({ code: "2190", path: "SellerDtls.Gstin", nic: "Invalid GSTIN", hint: "Seller GSTIN failed the 15-character checksum.", severity: "error" });
@@ -50,7 +50,7 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
   const items = inv.ItemList ?? [];
   if (!items.length) out.push({ code: "2003", path: "ItemList", nic: "No line items", hint: "At least one ItemList row is required.", severity: "error" });
 
-  let ass = 0, cgst = 0, sgst = 0, igst = 0, ces = 0;
+  let ass = 0, cgst = 0, sgst = 0, igst = 0;
   items.forEach((it, i) => {
     const path = `ItemList[${i}]`;
     if (!hsnFormatOk(it.HsnCd ?? "")) out.push({ ...issue("2176", `${path}.HsnCd`) });
@@ -74,7 +74,7 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     }
     const lineTot = money(it.AssAmt + it.IgstAmt + it.CgstAmt + it.SgstAmt + it.CesAmt + (it.OthChrg || 0));
     if (Math.abs(lineTot - it.TotItemVal) > 0.05) out.push({ code: "2234", path: `${path}.TotItemVal`, nic: "Item total mismatch", hint: `TotItemVal should be ${lineTot.toFixed(2)}.`, severity: "error", fix: "totals" });
-    ass += it.AssAmt; cgst += it.CgstAmt; sgst += it.SgstAmt; igst += it.IgstAmt; ces += it.CesAmt || 0;
+    ass += it.AssAmt; cgst += it.CgstAmt; sgst += it.SgstAmt; igst += it.IgstAmt;
   });
 
   const v = inv.ValDtls;
