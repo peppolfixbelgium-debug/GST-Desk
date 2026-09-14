@@ -1,7 +1,7 @@
 import assert from "node:assert/strict";
 import { test } from "node:test";
 import { autoFix } from "./fix.ts";
-import { gstinCheckDigit, gstinOk, makeGstin } from "./gstin.ts";
+import { gstinState, gstinCheckDigit, gstinOk, makeGstin } from "./gstin.ts";
 import { BROKEN_SAMPLE } from "./sample.ts";
 import { validateGst } from "./validate.ts";
 
@@ -30,4 +30,18 @@ test("auto-fix clears arithmetic/format blockers without changing protected busi
   assert.equal(invoice.SellerDtls.Pin, BROKEN_SAMPLE.SellerDtls.Pin, "auto-fix must not replace address PIN");
   assert.equal(invoice.ItemList[0]?.IsServc, BROKEN_SAMPLE.ItemList[0]?.IsServc, "auto-fix must not rewrite service classification");
   assert.equal(invoice.ItemList[1]?.IsServc, BROKEN_SAMPLE.ItemList[1]?.IsServc, "auto-fix must not rewrite service classification");
+});
+
+test("auto-fix never infers place of supply from buyer GSTIN", () => {
+  const input = structuredClone(BROKEN_SAMPLE);
+  delete input.BuyerDtls.Pos;
+  const { invoice, applied } = autoFix(input);
+
+  assert.equal(gstinState(input.BuyerDtls.Gstin), input.BuyerDtls.Stcd);
+  assert.equal(invoice.BuyerDtls.Pos, undefined, "missing POS is a business/legal fact and must remain unresolved");
+  assert.ok(!applied.some((entry) => entry.includes("Buyer Pos set")), "auto-fix must not claim a POS correction");
+
+  const issues = validateGst(invoice);
+  const posIssue = issues.find((issue) => issue.path === "BuyerDtls.Pos");
+  assert.equal(posIssue?.code, "2243", "validator must keep missing POS visible after auto-fix");
 });
