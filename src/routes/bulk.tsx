@@ -1,6 +1,6 @@
 import { createFileRoute, Link } from "@tanstack/react-router";
-import { useEffect, useState } from "react";
 import JSZip from "jszip";
+import { useEffect, useState } from "react";
 import { Shell } from "@/components/shell";
 import { Button } from "@/components/ui/button";
 import { RedirectToSignIn } from "@/lib/auth/gates";
@@ -60,14 +60,18 @@ function BulkPage() {
         if (!parsed.invoice) throw new Error(parsed.error || "Invalid JSON");
         const { invoice } = autoFix(parsed.invoice);
         const blockers = validateGst(invoice).filter((i) => i.severity === "error");
-        zip.file(`${invoice.DocDtls.No.replaceAll("/", "-")}.json`, JSON.stringify(invoice, null, 2));
+        // Persist first. Only include files after the atomic quota operation
+        // succeeds, so a failed save can never become an unmetered download.
         await saveConversion({ data: { invoiceId: invoice.DocDtls.No, supplier: invoice.SellerDtls.Gstin, customer: invoice.BuyerDtls.Gstin, total: String(invoice.ValDtls.TotInvVal), currency: "INR", status: blockers.length ? "issues" : "ok" } });
+        zip.file(`${invoice.DocDtls.No.replaceAll("/", "-")}.json`, JSON.stringify(invoice, null, 2));
         next.push({ name: file.name, invoiceId: invoice.DocDtls.No, status: blockers.length ? `${blockers.length} left` : "ok" });
       } catch (e) { next.push({ name: file.name, invoiceId: "", status: e instanceof Error ? e.message : "failed" }); }
     }
     setRows(next);
-    const blob = await zip.generateAsync({ type: "blob" });
-    const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "gst-irn-json.zip"; a.click(); URL.revokeObjectURL(url);
+    if (next.some((row) => row.invoiceId)) {
+      const blob = await zip.generateAsync({ type: "blob" });
+      const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "gst-irn-json.zip"; a.click(); URL.revokeObjectURL(url);
+    }
     await loadQuota(); setBusy(false);
   };
 
