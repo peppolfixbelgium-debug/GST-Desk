@@ -1,13 +1,36 @@
 import assert from "node:assert/strict";
-import test from "node:test";
+import { test } from "node:test";
 import { autoFix } from "./fix.ts";
-import { gstinState } from "./gstin.ts";
+import { gstinState, gstinCheckDigit, gstinOk, makeGstin } from "./gstin.ts";
+import { lookupHsn } from "./hsn.ts";
 import { BROKEN_SAMPLE } from "./sample.ts";
 import { validateGst } from "./validate.ts";
 
+test("GSTIN checksum round-trip", () => {
+  const g = makeGstin("29", "AABCU9603R", "1");
+  assert.equal(g.length, 15);
+  assert.equal(g.slice(0, 2), "29");
+  assert.equal(gstinCheckDigit(g.slice(0, 14)), g[14]);
+  assert.equal(gstinOk(g), true);
+  assert.equal(gstinOk(g.slice(0, 14) + "0"), false);
+});
+
+test("broken sample surfaces NIC-style codes", () => {
+  const issues = validateGst(BROKEN_SAMPLE);
+  const codes = new Set(issues.map((i) => i.code));
+  assert.ok(codes.has("2176") || codes.has("2172") || codes.has("2174") || codes.has("2189") || codes.has("3039"));
+});
+
+test("HSN lookup is exact and never falls back to prefix matches", () => {
+  assert.equal(lookupHsn("9982")?.code, "9982");
+  assert.equal(lookupHsn("998221")?.code, "998221");
+  assert.equal(lookupHsn("9982 ")?.code, "9982");
+  assert.equal(lookupHsn("998299"), undefined, "an unknown child code must not inherit a parent classification");
+  assert.equal(lookupHsn("998"), undefined, "an incomplete code must not match a longer master code");
+});
+
 test("auto-fix clears arithmetic/format blockers without changing protected business data", () => {
-  const input = structuredClone(BROKEN_SAMPLE);
-  const { invoice, applied } = autoFix(input);
+  const { invoice, applied } = autoFix(BROKEN_SAMPLE);
   assert.ok(applied.length > 0);
   const blockers = validateGst(invoice).filter((i) => i.severity === "error");
   const protectedCodes = new Set(["3039", "3047", "3048"]);
@@ -29,5 +52,5 @@ test("auto-fix never infers place of supply from buyer GSTIN", () => {
 
   const issues = validateGst(invoice);
   const posIssue = issues.find((issue) => issue.path === "BuyerDtls.Pos");
-  assert.ok(posIssue === undefined || posIssue.code === "2243", "POS must remain unresolved or explicitly flagged; it must never be fabricated");
+  assert.equal(posIssue?.code, "2243", "validator must keep missing POS visible after auto-fix");
 });
