@@ -8,6 +8,7 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getQuota, saveConversion, type Quota } from "@/lib/gst/conversions";
 import { autoFix } from "@/lib/gst/fix";
 import { parseInvoice, validateGst } from "@/lib/gst/validate";
+import { validateBulkFiles, MAX_BULK_FILES, MAX_BULK_OUTPUT_FILES } from "@/lib/security/resource-limits";
 
 export const Route = createFileRoute("/bulk")({ component: BulkPage });
 
@@ -47,12 +48,15 @@ function BulkPage() {
   const remaining = quota?.remaining ?? 0;
 
   const onFiles = async (files: FileList) => {
+    const inputFiles = [...files];
+    const resourceError = validateBulkFiles(inputFiles);
+    if (resourceError) { setNotice(resourceError); return; }
     if (!quota) { setNotice("Quota is unavailable. Please retry before uploading files."); return; }
     if (remaining <= 0) { setNotice("Monthly free quota used. It resets on the 1st."); return; }
     setBusy(true); setNotice(null);
     const zip = new JSZip();
     const next: Row[] = [];
-    const list = [...files].slice(0, remaining);
+    const list = inputFiles.slice(0, Math.min(remaining, MAX_BULK_FILES, MAX_BULK_OUTPUT_FILES));
     for (const file of list) {
       try {
         const text = await file.text();
@@ -60,8 +64,6 @@ function BulkPage() {
         if (!parsed.invoice) throw new Error(parsed.error || "Invalid JSON");
         const { invoice } = autoFix(parsed.invoice);
         const blockers = validateGst(invoice).filter((i) => i.severity === "error");
-        // Persist first. Only include files after the atomic quota operation
-        // succeeds, so a failed save can never become an unmetered download.
         await saveConversion({ data: { invoiceId: invoice.DocDtls.No, supplier: invoice.SellerDtls.Gstin, customer: invoice.BuyerDtls.Gstin, total: String(invoice.ValDtls.TotInvVal), currency: "INR", status: blockers.length ? "issues" : "ok" } });
         zip.file(`${invoice.DocDtls.No.replaceAll("/", "-")}.json`, JSON.stringify(invoice, null, 2));
         next.push({ name: file.name, invoiceId: invoice.DocDtls.No, status: blockers.length ? `${blockers.length} left` : "ok" });
@@ -79,7 +81,7 @@ function BulkPage() {
     <Shell>
       <div className="mx-auto max-w-3xl px-4 py-12">
         <h1 className="text-3xl">Bulk fix</h1>
-        <p className="mt-2 text-sm text-muted">Each JSON counts against this month's quota ({quota ? `${quota.used}/${quota.limit}` : quotaError ? "unavailable" : "loading…"}).</p>
+        <p className="mt-2 text-sm text-muted">Each JSON counts against this month's quota (up to {MAX_BULK_FILES} files per run).</p>
         {quotaError ? <div className="mt-4 flex items-center justify-between gap-3 rounded-md border border-danger bg-surface px-4 py-3 text-sm"><span>Could not load your monthly quota.</span><Button variant="outline" size="sm" onClick={() => void loadQuota()}>Retry</Button></div> : null}
         {remaining <= 0 && quota ? <p className="mt-4 text-sm">Quota used. <Link to="/pricing" className="text-accent underline">See plans</Link></p> : null}
         {remaining > 0 && quota ? <label className="mt-6 flex h-40 cursor-pointer flex-col items-center justify-center rounded-lg border border-dashed border-line bg-surface text-sm text-muted">Drop several e-invoice JSON files<input type="file" accept="application/json,.json" multiple className="hidden" disabled={busy} onChange={(e) => { if (e.target.files?.length) void onFiles(e.target.files); }} /></label> : null}
