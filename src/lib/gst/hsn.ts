@@ -43,9 +43,10 @@ export const HSN: HsnRow[] = [
 
 const byCode = new Map(HSN.map((h) => [h.code, h]));
 
+/** Exact master lookup only. Prefix matching is unsafe for HSN/SAC classification. */
 export function lookupHsn(code: string): HsnRow | undefined {
   const c = code.replace(/\s/g, "");
-  return byCode.get(c) ?? HSN.find((h) => c.startsWith(h.code) || h.code.startsWith(c));
+  return byCode.get(c);
 }
 
 export function hsnFormatOk(code: string): boolean {
