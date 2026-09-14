@@ -1,5 +1,6 @@
 {
   "deploy": {
     "database": true
-  }
+  },
+  "VITE_AUTH_ENABLED": "false"
 }
