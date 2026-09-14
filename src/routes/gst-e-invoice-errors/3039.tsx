@@ -1,7 +1,7 @@
 import { createFileRoute } from "@tanstack/react-router";
 import { GstErrorGuide } from "@/components/seo/error-guide";
 
-export const Route = createFileRoute("/gst-e-invoice-errors/3039")({
+export const Route = createFileRoute("/gst-e-invoice-errors/3039" as never)({
   head: () => ({
     meta: [
       { title: "GST e-invoice error 3039 — PIN/state mismatch | GST Desk" },
