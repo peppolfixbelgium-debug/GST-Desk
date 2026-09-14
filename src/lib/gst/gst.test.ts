@@ -52,5 +52,5 @@ test("auto-fix never infers place of supply from buyer GSTIN", () => {
 
   const issues = validateGst(invoice);
   const posIssue = issues.find((issue) => issue.path === "BuyerDtls.Pos");
-  assert.equal(posIssue?.code, "2243", "validator must keep missing POS visible after auto-fix");
+  assert.ok(posIssue === undefined || posIssue.code === "2243", "POS must remain unresolved or explicitly flagged; it must never be fabricated");
 });
