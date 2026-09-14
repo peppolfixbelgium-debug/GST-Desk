@@ -13,6 +13,7 @@ import type { GstInvoice } from "@/lib/gst/types";
 import { parseInvoice, validateGst } from "@/lib/gst/validate";
 import { downloadBlob } from "@/lib/utils";
 import { trackAcquisition } from "@/lib/analytics/acquisition";
+import { assertJsonTextWithinLimit, MAX_SINGLE_JSON_BYTES } from "@/lib/security/resource-limits";
 
 export const Route = createFileRoute("/converter")({ component: FixerPage });
 
@@ -63,6 +64,13 @@ function FixerPage() {
 
   const loadJson = (text: string) => {
     setRaw(text);
+    try {
+      assertJsonTextWithinLimit(text, MAX_SINGLE_JSON_BYTES);
+    } catch (error) {
+      trackAcquisition({ event: "json_parse_error" });
+      setParseError(error instanceof Error ? error.message : "JSON input is too large.");
+      setInvoice(null); setApplied([]); return;
+    }
     const parsed = parseInvoice(text);
     if (parsed.error) {
       trackAcquisition({ event: "json_parse_error" });
