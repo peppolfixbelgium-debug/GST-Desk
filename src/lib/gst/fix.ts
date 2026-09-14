@@ -8,8 +8,8 @@ function clone<T>(v: T): T {
 
 /**
  * Conservative, deterministic formatting/arithmetic fixes only.
- * Business-master values such as PIN, HSN classification and tax rate are
- * never invented or overwritten from the incomplete local fixture.
+ * Business-master values such as PIN, HSN classification, tax rate and place
+ * of supply are never invented or overwritten from the incomplete local fixture.
  */
 export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: string[] } {
   const inv = clone(input);
@@ -50,14 +50,13 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
       inv.BuyerDtls.Stcd = st;
       applied.push(`Buyer Stcd set to ${st} from buyer GSTIN state`);
     }
-    if (!inv.BuyerDtls.Pos && st) {
-      inv.BuyerDtls.Pos = st;
-      applied.push(`Buyer Pos set to ${st} from buyer GSTIN state`);
-    }
+    // Do NOT infer Buyer Pos from the buyer GSTIN. Place of supply is a
+    // transaction/legal fact and can differ from the buyer's registration state.
   }
 
   // Never replace an address PIN: a representative PIN can corrupt customer data.
-  // Never alter HSN rate/service: the local fixture is incomplete/non-authoritative.
+  // Never alter HSN rate/service or place of supply: the local fixture is
+  // incomplete/non-authoritative and POS cannot safely be inferred from GSTIN.
   const pos = inv.BuyerDtls?.Pos || inv.BuyerDtls?.Stcd;
   const intraState = gstinState(inv.SellerDtls?.Gstin ?? "") === pos;
   for (const it of inv.ItemList ?? []) {
