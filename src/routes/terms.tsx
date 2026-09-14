@@ -11,7 +11,7 @@ function Page() {
         <p className="mt-2">Pre-launch version - last reviewed 14 September 2026.</p>
         <p className="mt-6">GST Desk provides software for validating GST e-invoice JSON and suggesting or applying supported corrections. The final contracting entity, address, governing law, jurisdiction, payment terms and dispute process must be confirmed before paid public launch.</p>
         <h2 className="mt-8 text-xl text-fg">GST and IRN boundary</h2>
-        <p className="mt-3">GST Desk is not a GST Suvidha Provider (GSP), does not act as an Invoice Registration Portal (IRP), and does not submit invoices to an IRP or obtain an IRN on your behalf. “IRN-ready” means only that a file passed GST Desk local validation checks; it does not mean an IRP has accepted, registered or issued an IRN.</p>
+        <p className="mt-3">GST Desk is not a GST Suvidha Provider (GSP), does not act as an Invoice Registration Portal (IRP), and does not submit invoices to an IRP or obtain an IRN on your behalf. IRN-ready means only that a file passed GST Desk local validation checks; it does not mean an IRP has accepted, registered or issued an IRN.</p>
         <h2 className="mt-8 text-xl text-fg">Your responsibility</h2>
         <p className="mt-3">GST Desk provides software validation and suggested corrections. It is not tax, accounting or legal advice. You remain responsible for reviewing the source invoice, corrections, applicable GST law and rules, and the final document before filing, reporting or commercial use.</p>
         <h2 className="mt-8 text-xl text-fg">Acceptable use</h2>
