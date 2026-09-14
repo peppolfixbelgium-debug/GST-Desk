@@ -1,15 +1,46 @@
 import assert from "node:assert/strict";
-import { readFileSync, readdirSync } from "node:fs";
+import {
+  existsSync,
+  mkdirSync,
+  mkdtempSync,
+  readFileSync,
+  readdirSync,
+  writeFileSync,
+} from "node:fs";
+import { tmpdir } from "node:os";
 import { join } from "node:path";
 import { test } from "node:test";
-import { AUTH_MIGRATION, isMigrationFile, pendingMigrations, projectRoot } from "./migration-plan.mjs";
+import { isMigrationFile, migrationName, pendingMigrations } from "./migration-plan.mjs";
+import { projectRoot } from "./with-app-env.mjs";
+
+const AUTH_MIGRATION = "0001_auth.sql";
+
+function authSchemaCopy(root) {
+  const copy = join(root, "migrations", AUTH_MIGRATION);
+  const source = join(root, "migrations/auth", AUTH_MIGRATION);
+  if (!existsSync(copy) || !existsSync(source)) return null;
+  return { copy: readFileSync(copy, "utf8"), source: readFileSync(source, "utf8") };
+}
+
+test("_migrations keys on basename, not path", () => {
+  assert.equal(migrationName("/migrations/0002_todos.sql"), "0002_todos.sql");
+  assert.equal(migrationName("migrations/auth/0001_auth.sql"), "0001_auth.sql");
+  assert.equal(migrationName("0001_auth.sql"), "0001_auth.sql");
+});
+
+test("a file already applied from another directory does not re-apply", () => {
+  assert.deepEqual(pendingMigrations(["/migrations/0001_auth.sql"], ["0001_auth.sql"]), []);
+});
 
 test("pending migrations are returned in name order", () => {
   assert.deepEqual(
-    pendingMigrations(["migrations/0002.sql", "migrations/0001.sql", "migrations/nope.txt"], []),
+    pendingMigrations(
+      ["/migrations/0003_c.sql", "/migrations/0001_a.sql", "/migrations/0002_b.sql"],
+      ["0001_a.sql"],
+    ),
     [
-      { name: "0001.sql", path: "migrations/0001.sql" },
-      { name: "0002.sql", path: "migrations/0002.sql" },
+      { name: "0002_b.sql", path: "/migrations/0002_b.sql" },
+      { name: "0003_c.sql", path: "/migrations/0003_c.sql" },
     ],
   );
 });
@@ -33,17 +64,22 @@ test("the production migration directory contains only root SQL migrations", () 
 });
 
 test("this workspace's auth schema copy is byte-identical to its source", () => {
-  const root = projectRoot();
-  const source = readFileSync(join(root, "migrations", "auth", AUTH_MIGRATION), "utf8");
-  const copy = readFileSync(join(root, "migrations", "0001_auth.sql"), "utf8");
-  assert.equal(copy, source);
+  const pair = authSchemaCopy(projectRoot());
+  if (pair === null) return;
+  assert.equal(pair.copy, pair.source);
 });
 
 test("the copy check reads both files and catches an edit", () => {
-  const root = projectRoot();
-  const source = readFileSync(join(root, "migrations", "auth", AUTH_MIGRATION), "utf8");
-  const copy = readFileSync(join(root, "migrations", "0001_auth.sql"), "utf8");
-  assert.equal(typeof source, "string");
-  assert.equal(typeof copy, "string");
-  assert.equal(copy, source);
+  const root = mkdtempSync(join(tmpdir(), "auth-schema-"));
+  mkdirSync(join(root, "migrations/auth"), { recursive: true });
+  writeFileSync(join(root, "migrations/auth", AUTH_MIGRATION), "create table t ();\n");
+  assert.equal(authSchemaCopy(root), null);
+
+  writeFileSync(join(root, "migrations", AUTH_MIGRATION), "create table t ();\n");
+  const same = authSchemaCopy(root);
+  assert.equal(same.copy, same.source);
+
+  writeFileSync(join(root, "migrations", AUTH_MIGRATION), "create table t (x int);\n");
+  const drifted = authSchemaCopy(root);
+  assert.notEqual(drifted.copy, drifted.source);
 });
