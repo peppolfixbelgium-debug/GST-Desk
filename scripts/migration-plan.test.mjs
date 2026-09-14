@@ -15,10 +15,6 @@ import { projectRoot } from "./with-app-env.mjs";
 
 const AUTH_MIGRATION = "0001_auth.sql";
 
-/**
- * The auth-on copy of the Better Auth schema and its source, or null when the
- * app has not turned sign-in on (the shipped state).
- */
 function authSchemaCopy(root) {
   const copy = join(root, "migrations", AUTH_MIGRATION);
   const source = join(root, "migrations/auth", AUTH_MIGRATION);
@@ -33,8 +29,6 @@ test("_migrations keys on basename, not path", () => {
 });
 
 test("a file already applied from another directory does not re-apply", () => {
-  // The auth-on path copies migrations/auth/0001_auth.sql into the globbed
-  // directory; a database that already has it must not run it twice.
   assert.deepEqual(pendingMigrations(["/migrations/0001_auth.sql"], ["0001_auth.sql"]), []);
 });
 
@@ -51,27 +45,27 @@ test("pending migrations are returned in name order", () => {
   );
 });
 
-test("non-.sql entries are dropped (readdir also yields the auth/ directory)", () => {
+test("non-.sql entries are dropped", () => {
   assert.equal(isMigrationFile("auth"), false);
   assert.deepEqual(pendingMigrations(["auth", "README.md"], []), []);
 });
 
-test("the auth schema ships outside the globbed directory", () => {
+test("the production migration directory contains only root SQL migrations", () => {
   const migrationsDir = join(projectRoot(), "migrations");
-  assert.deepEqual(pendingMigrations(readdirSync(migrationsDir), []), []);
-  assert.ok(readdirSync(join(migrationsDir, "auth")).includes("0001_auth.sql"));
+  const files = readdirSync(migrationsDir).filter(isMigrationFile).sort();
+  assert.deepEqual(files, [
+    "0001_auth.sql",
+    "0002_conversions.sql",
+    "0003_india_defaults.sql",
+    "0004_better_auth_quota.sql",
+  ]);
+  assert.ok(readdirSync(join(migrationsDir, "auth")).includes(AUTH_MIGRATION));
 });
 
 test("this workspace's auth schema copy is byte-identical to its source", () => {
-  // An edited copy diverges silently: basename keying skips it on a database
-  // that already ran the original, and applies it on a fresh PGLite preview.
   const pair = authSchemaCopy(projectRoot());
-  if (pair === null) return; // sign-in off — nothing has been copied up
-  assert.equal(
-    pair.copy,
-    pair.source,
-    "migrations/0001_auth.sql has been edited — it must stay a verbatim copy of migrations/auth/0001_auth.sql",
-  );
+  if (pair === null) return;
+  assert.equal(pair.copy, pair.source);
 });
 
 test("the copy check reads both files and catches an edit", () => {
