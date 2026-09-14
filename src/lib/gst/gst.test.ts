@@ -20,9 +20,14 @@ test("broken sample surfaces NIC-style codes", () => {
   assert.ok(codes.has("2176") || codes.has("2172") || codes.has("2174") || codes.has("2189") || codes.has("3039"));
 });
 
-test("auto-fix clears blocking errors on the sample", () => {
+test("auto-fix clears arithmetic/format blockers without changing protected business data", () => {
   const { invoice, applied } = autoFix(BROKEN_SAMPLE);
   assert.ok(applied.length > 0);
   const blockers = validateGst(invoice).filter((i) => i.severity === "error");
-  assert.equal(blockers.length, 0, blockers.map((b) => `${b.code} ${b.path}`).join("; "));
+  const protectedCodes = new Set(["3039", "3047", "3048"]);
+  assert.ok(blockers.length > 0, "protected business-master mismatches must remain visible");
+  assert.ok(blockers.every((b) => protectedCodes.has(b.code)), blockers.map((b) => `${b.code} ${b.path}`).join("; "));
+  assert.equal(invoice.SellerDtls.Pin, BROKEN_SAMPLE.SellerDtls.Pin, "auto-fix must not replace address PIN");
+  assert.equal(invoice.ItemList[0]?.IsServc, BROKEN_SAMPLE.ItemList[0]?.IsServc, "auto-fix must not rewrite service classification");
+  assert.equal(invoice.ItemList[1]?.IsServc, BROKEN_SAMPLE.ItemList[1]?.IsServc, "auto-fix must not rewrite service classification");
 });
