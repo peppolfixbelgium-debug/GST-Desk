@@ -2,6 +2,7 @@ import assert from "node:assert/strict";
 import { test } from "node:test";
 import { autoFix } from "./fix.ts";
 import { gstinState, gstinCheckDigit, gstinOk, makeGstin } from "./gstin.ts";
+import { lookupHsn } from "./hsn.ts";
 import { BROKEN_SAMPLE } from "./sample.ts";
 import { validateGst } from "./validate.ts";
 
@@ -18,6 +19,14 @@ test("broken sample surfaces NIC-style codes", () => {
   const issues = validateGst(BROKEN_SAMPLE);
   const codes = new Set(issues.map((i) => i.code));
   assert.ok(codes.has("2176") || codes.has("2172") || codes.has("2174") || codes.has("2189") || codes.has("3039"));
+});
+
+test("HSN lookup is exact and never falls back to prefix matches", () => {
+  assert.equal(lookupHsn("9982")?.code, "9982");
+  assert.equal(lookupHsn("998221")?.code, "998221");
+  assert.equal(lookupHsn("9982 ")?.code, "9982");
+  assert.equal(lookupHsn("998299"), undefined, "an unknown child code must not inherit a parent classification");
+  assert.equal(lookupHsn("998"), undefined, "an incomplete code must not match a longer master code");
 });
 
 test("auto-fix clears arithmetic/format blockers without changing protected business data", () => {
