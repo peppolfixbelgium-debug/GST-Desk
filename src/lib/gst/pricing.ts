@@ -5,7 +5,7 @@ export const PRICING = [
     price: 0,
     invoices: 5,
     blurb: "For a practice testing real IRP JSON.",
-    features: ["5 invoices / calendar month", "Supported IRP error mapping", "HSN + PIN auto-fix", "EN / हिन्दी"],
+    features: ["5 invoices / calendar month", "Supported IRP error mapping", "Safe format + arithmetic auto-fix", "EN / हिन्दी"],
     cta: "Start free",
   },
   {
