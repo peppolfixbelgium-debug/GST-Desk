@@ -1,6 +1,6 @@
 import { createServerFn } from "@tanstack/react-start";
 import { authMiddleware } from "@/lib/auth/middleware";
-import { getSql } from "@/lib/db";
+import { getSql, type Sql } from "@/lib/db";
 import { accountRoleForEmail, type AccountRole } from "@/lib/auth/roles";
 import { planEntitlement, type BillingCycle, type PlanId } from "@/lib/gst/plans";
 
@@ -34,7 +34,7 @@ type AccountPlan = {
   role: AccountRole;
 };
 
-async function resolveAccountPlan(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<AccountPlan> {
+async function resolveAccountPlan(sql: Sql, userId: string): Promise<AccountPlan> {
   const rows = await sql<{
     email: string;
     plan_id: PlanId | null;
@@ -58,7 +58,7 @@ async function resolveAccountPlan(sql: Awaited<ReturnType<typeof getSql>>, userI
   return { planId, billingCycle, status, role };
 }
 
-async function quotaForUser(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<Quota> {
+async function quotaForUser(sql: Sql, userId: string): Promise<Quota> {
   const account = await resolveAccountPlan(sql, userId);
   const entitlement = planEntitlement(account.planId);
   const rows = await sql<{ n: number }>`
