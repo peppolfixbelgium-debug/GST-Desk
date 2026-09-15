@@ -36,7 +36,7 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
     }
   }
 
-  // GSTIN-derived state is deterministic and safe to normalise.
+  // GSTIN-derived registration state is deterministic and safe to normalise.
   if (inv.SellerDtls?.Gstin) {
     const st = gstinState(inv.SellerDtls.Gstin);
     if (st && inv.SellerDtls.Stcd !== st) {
@@ -54,27 +54,33 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
     // transaction/legal fact and can differ from the buyer's registration state.
   }
 
-  // Never replace an address PIN: a representative PIN can corrupt customer data.
-  // Never alter HSN rate/service or place of supply: the local fixture is
-  // incomplete/non-authoritative and POS cannot safely be inferred from GSTIN.
-  const pos = inv.BuyerDtls?.Pos || inv.BuyerDtls?.Stcd;
-  const intraState = gstinState(inv.SellerDtls?.Gstin ?? "") === pos;
+  // Never replace an address PIN or HSN/rate/service from the incomplete local fixture.
+  // Tax jurisdiction is also never inferred when Pos is absent.
+  const pos = inv.BuyerDtls?.Pos;
+  const sellerState = gstinState(inv.SellerDtls?.Gstin ?? "");
+  const intraState = pos && sellerState ? sellerState === pos : null;
+
   for (const it of inv.ItemList ?? []) {
     // Exact lookup is intentionally informational only; no business data is changed.
     void lookupHsn(it.HsnCd);
     it.TotAmt = money(it.Qty * it.UnitPrice);
     it.AssAmt = money(it.TotAmt - (it.Discount || 0));
 
-    const tax = money(it.AssAmt * (it.GstRt / 100));
-    if (intraState) {
-      it.CgstAmt = money(tax / 2);
-      it.SgstAmt = money(tax / 2);
-      it.IgstAmt = 0;
-    } else {
-      it.IgstAmt = tax;
-      it.CgstAmt = 0;
-      it.SgstAmt = 0;
+    if (intraState !== null) {
+      const tax = money(it.AssAmt * (it.GstRt / 100));
+      if (intraState) {
+        it.CgstAmt = money(tax / 2);
+        it.SgstAmt = money(tax / 2);
+        it.IgstAmt = 0;
+      } else {
+        it.IgstAmt = tax;
+        it.CgstAmt = 0;
+        it.SgstAmt = 0;
+      }
     }
+
+    // TotItemVal can be reconciled arithmetically without changing the tax jurisdiction
+    // when Pos is missing/unknown.
     it.TotItemVal = money(it.AssAmt + it.IgstAmt + it.CgstAmt + it.SgstAmt + (it.CesAmt || 0) + (it.OthChrg || 0));
   }
 
@@ -105,8 +111,9 @@ export function autoFix(input: GstInvoice): { invoice: GstInvoice; applied: stri
     applied.push(`TotInvVal recalculated to ${beforeRound.toFixed(2)}`);
   }
 
-  if (intraState) applied.push("Intra-state: IGST cleared, CGST/SGST split");
-  else applied.push("Inter-state: CGST/SGST cleared, IGST applied");
+  if (intraState === true) applied.push("Intra-state: IGST cleared, CGST/SGST split");
+  else if (intraState === false) applied.push("Inter-state: CGST/SGST cleared, IGST applied");
+  else applied.push("Tax split preserved because Place of Supply is missing or unverified");
 
   return { invoice: inv, applied };
 }
