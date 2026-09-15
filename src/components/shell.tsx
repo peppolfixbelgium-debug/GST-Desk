@@ -66,7 +66,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/pricing" className="text-muted hover:text-fg">{t(lang, "pricing")}</Link>
             <SignedIn>
               <Link to="/dashboard" className="text-muted hover:text-fg">{t(lang, "dashboard")}</Link>
-              <Link to="/mission-control" search={{}} className="text-muted hover:text-accent">Mission Control</Link>
+              <Link to="/mission-control" search={(prev) => prev} className="text-muted hover:text-accent">Mission Control</Link>
             </SignedIn>
           </nav>
           <div className="flex items-center gap-2">
@@ -88,7 +88,7 @@ export function Shell({ children }: { children: ReactNode }) {
             <Link to="/pricing" onClick={() => setOpen(false)}>{t(lang, "pricing")}</Link>
             <SignedIn>
               <Link to="/dashboard" onClick={() => setOpen(false)}>{t(lang, "dashboard")}</Link>
-              <Link to="/mission-control" search={{}} onClick={() => setOpen(false)}>Mission Control</Link>
+              <Link to="/mission-control" search={(prev) => prev} onClick={() => setOpen(false)}>Mission Control</Link>
             </SignedIn>
             <SignedOut><Link to="/login" onClick={() => setOpen(false)}>{t(lang, "signIn")}</Link></SignedOut>
           </div>
