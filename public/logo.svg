@@ -1,4 +1,21 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
-  <rect width="32" height="32" rx="8" fill="#0F5C4C"/>
-  <text x="16" y="21" text-anchor="middle" font-family="Georgia, serif" font-size="13" fill="#F4F0E6">G</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64" role="img" aria-labelledby="title desc">
+  <title id="title">GST Desk</title>
+  <desc id="desc">GST Desk document validation mark with a check badge</desc>
+  <defs>
+    <linearGradient id="navy" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#0B2545"/>
+      <stop offset="1" stop-color="#2563EB"/>
+    </linearGradient>
+    <linearGradient id="success" x1="0" y1="0" x2="1" y2="1">
+      <stop offset="0" stop-color="#10B981"/>
+      <stop offset="1" stop-color="#0B8F73"/>
+    </linearGradient>
+  </defs>
+  <rect width="64" height="64" rx="16" fill="#0B2545"/>
+  <path d="M15 12h24l10 10v23a5 5 0 0 1-5 5H15a5 5 0 0 1-5-5V17a5 5 0 0 1 5-5Z" fill="url(#navy)"/>
+  <path d="M39 12v10h10" fill="#60A5FA"/>
+  <path d="M19 28h19M19 35h14M19 42h10" stroke="#fff" stroke-width="3" stroke-linecap="round" opacity=".95"/>
+  <rect x="31" y="34" width="23" height="23" rx="11.5" fill="url(#success)" stroke="#0B2545" stroke-width="2"/>
+  <path d="m37 45 4 4 8-9" fill="none" stroke="#fff" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
+  <path d="M9 25h5M9 31h3" stroke="#F97316" stroke-width="3" stroke-linecap="round"/>
 </svg>
