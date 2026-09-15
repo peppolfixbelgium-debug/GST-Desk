@@ -60,80 +60,37 @@ export function Shell({ children }: { children: ReactNode }) {
             <span className="font-display text-lg tracking-tight">{t(lang, "product")}</span>
           </Link>
           <nav className="hidden items-center gap-6 text-sm md:flex">
-            <Link to="/converter" className="text-muted hover:text-fg">
-              {t(lang, "convert")}
-            </Link>
-            <Link to="/validate" className="text-muted hover:text-fg">
-              {t(lang, "validator")}
-            </Link>
-            <Link to="/bulk" className="text-muted hover:text-fg">
-              {t(lang, "bulk")}
-            </Link>
-            <Link to="/pricing" className="text-muted hover:text-fg">
-              {t(lang, "pricing")}
-            </Link>
+            <Link to="/converter" className="text-muted hover:text-fg">{t(lang, "convert")}</Link>
+            <Link to="/validate" className="text-muted hover:text-fg">{t(lang, "validator")}</Link>
+            <Link to="/bulk" className="text-muted hover:text-fg">{t(lang, "bulk")}</Link>
+            <Link to="/pricing" className="text-muted hover:text-fg">{t(lang, "pricing")}</Link>
             <SignedIn>
-              <Link to="/dashboard" className="text-muted hover:text-fg">
-                {t(lang, "dashboard")}
-              </Link>
+              <Link to="/dashboard" className="text-muted hover:text-fg">{t(lang, "dashboard")}</Link>
+              <Link to="/mission-control" className="text-muted hover:text-accent">Mission Control</Link>
             </SignedIn>
           </nav>
           <div className="flex items-center gap-2">
             <div className="hidden overflow-hidden rounded-full border border-line text-[11px] md:flex">
               {LANGS.map((l) => (
-                <button
-                  key={l}
-                  type="button"
-                  onClick={() => setLang(l)}
-                  className={`px-2 py-1 uppercase ${lang === l ? "bg-accent text-accent-fg" : "text-muted"}`}
-                >
-                  {l}
-                </button>
+                <button key={l} type="button" onClick={() => setLang(l)} className={`px-2 py-1 uppercase ${lang === l ? "bg-accent text-accent-fg" : "text-muted"}`}>{l}</button>
               ))}
             </div>
-            <button
-              type="button"
-              aria-label="Toggle theme"
-              onClick={toggle}
-              className="grid h-9 w-9 place-items-center rounded-full border border-line"
-            >
-              {dark ? <Sun className="size-4" /> : <Moon className="size-4" />}
-            </button>
+            <button type="button" aria-label="Toggle theme" onClick={toggle} className="grid h-9 w-9 place-items-center rounded-full border border-line">{dark ? <Sun className="size-4" /> : <Moon className="size-4" />}</button>
             <AuthSlot />
-            <button
-              type="button"
-              className="grid h-9 w-9 place-items-center rounded-full border border-line md:hidden"
-              onClick={() => setOpen((v) => !v)}
-              aria-label="Menu"
-            >
-              <span className="block h-px w-4 bg-fg" />
-            </button>
+            <button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-line md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu"><span className="block h-px w-4 bg-fg" /></button>
           </div>
         </div>
         {open ? (
           <div className="flex flex-col gap-3 border-t border-line px-4 py-3 text-sm md:hidden">
-            <Link to="/converter" onClick={() => setOpen(false)}>
-              {t(lang, "convert")}
-            </Link>
-            <Link to="/validate" onClick={() => setOpen(false)}>
-              {t(lang, "validator")}
-            </Link>
-            <Link to="/bulk" onClick={() => setOpen(false)}>
-              {t(lang, "bulk")}
-            </Link>
-            <Link to="/pricing" onClick={() => setOpen(false)}>
-              {t(lang, "pricing")}
-            </Link>
+            <Link to="/converter" onClick={() => setOpen(false)}>{t(lang, "convert")}</Link>
+            <Link to="/validate" onClick={() => setOpen(false)}>{t(lang, "validator")}</Link>
+            <Link to="/bulk" onClick={() => setOpen(false)}>{t(lang, "bulk")}</Link>
+            <Link to="/pricing" onClick={() => setOpen(false)}>{t(lang, "pricing")}</Link>
             <SignedIn>
-              <Link to="/dashboard" onClick={() => setOpen(false)}>
-                {t(lang, "dashboard")}
-              </Link>
+              <Link to="/dashboard" onClick={() => setOpen(false)}>{t(lang, "dashboard")}</Link>
+              <Link to="/mission-control" onClick={() => setOpen(false)}>Mission Control</Link>
             </SignedIn>
-            <SignedOut>
-              <Link to="/login" onClick={() => setOpen(false)}>
-                {t(lang, "signIn")}
-              </Link>
-            </SignedOut>
+            <SignedOut><Link to="/login" onClick={() => setOpen(false)}>{t(lang, "signIn")}</Link></SignedOut>
           </div>
         ) : null}
       </header>
@@ -141,11 +98,7 @@ export function Shell({ children }: { children: ReactNode }) {
       <footer className="border-t border-line">
         <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-8 text-xs text-muted">
           <p>JSON ready for NIC / your GSP. We do not file the IRN.</p>
-          <div className="flex gap-4">
-            <Link to="/terms">Terms</Link>
-            <Link to="/privacy">Privacy</Link>
-            <Link to="/security">Security</Link>
-          </div>
+          <div className="flex gap-4"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/security">Security</Link></div>
         </div>
       </footer>
     </div>
