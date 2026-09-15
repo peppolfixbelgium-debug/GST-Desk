@@ -35,6 +35,15 @@ test("positive: unknown local PIN mapping is warning, not mismatch", () => {
 test("negative: known PIN/state mismatch remains blocking", () => assert.ok(validateGst(baseInvoice({ SellerDtls: { ...baseInvoice().SellerDtls, Pin: 400001 } })).some(x => x.path === "SellerDtls.Pin" && x.code === "3039")));
 test("negative: future invoice date is blocking", () => assert.ok(validateGst(baseInvoice({ DocDtls: { ...baseInvoice().DocDtls, Dt: "14/09/2099" } })).some(x => x.path === "DocDtls.Dt" && x.severity === "error")));
 test("negative: total mismatch is blocking", () => assert.ok(validateGst(baseInvoice({ ValDtls: { ...baseInvoice().ValDtls, TotInvVal: 999 } })).some(x => x.path === "ValDtls.TotInvVal")));
+test("positive: supported 40% GST rate participates in tax reconciliation", () => {
+  const input = baseInvoice({
+    ItemList: [{ ...baseInvoice().ItemList[0], HsnCd: "999999", GstRt: 40, IgstAmt: 400, TotItemVal: 1400 }],
+    ValDtls: { ...baseInvoice().ValDtls, AssVal: 1000, IgstVal: 400, TotInvVal: 1400 },
+  });
+  const issues = validateGst(input);
+  assert.ok(issues.some(x => x.code === "HSN-UNVERIFIED" && x.severity === "warning"));
+  assert.ok(!issues.some(x => x.severity === "error"));
+});
 test("safety: auto-fix never overwrites PIN or HSN/rate from local fixture", () => {
   const input = baseInvoice({ SellerDtls: { ...baseInvoice().SellerDtls, Pin: 400001 }, ItemList: [{ ...baseInvoice().ItemList[0], HsnCd: "999999", GstRt: 40 }] });
   const result = autoFix(input);
