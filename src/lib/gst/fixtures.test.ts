@@ -42,3 +42,17 @@ test("safety: auto-fix never overwrites PIN or HSN/rate from local fixture", () 
   assert.equal(result.invoice.ItemList[0].HsnCd, "999999");
   assert.equal(result.invoice.ItemList[0].GstRt, 40);
 });
+test("safety: missing Pos does not trigger inferred tax split or rewrite tax amounts", () => {
+  const input = baseInvoice({
+    BuyerDtls: { ...baseInvoice().BuyerDtls, Pos: undefined },
+    ItemList: [{ ...baseInvoice().ItemList[0], IgstAmt: 0, CgstAmt: 90, SgstAmt: 90, TotItemVal: 1180 }],
+    ValDtls: { ...baseInvoice().ValDtls, IgstVal: 0, CgstVal: 90, SgstVal: 90 },
+  });
+  const issues = validateGst(input);
+  assert.ok(issues.some(x => x.path === "BuyerDtls.Pos" && x.code === "2243"));
+  const result = autoFix(input);
+  assert.equal(result.invoice.ItemList[0].IgstAmt, 0);
+  assert.equal(result.invoice.ItemList[0].CgstAmt, 90);
+  assert.equal(result.invoice.ItemList[0].SgstAmt, 90);
+  assert.ok(result.applied.some(x => x.includes("Place of Supply is missing or unverified")));
+});
