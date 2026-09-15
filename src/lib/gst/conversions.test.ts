@@ -3,6 +3,7 @@ import { readFileSync } from "node:fs";
 import { test } from "node:test";
 
 const source = readFileSync(new URL("./conversions.ts", import.meta.url), "utf8");
+const migration = readFileSync(new URL("../../../migrations/0007_conversion_rate_limit.sql", import.meta.url), "utf8");
 const saveHandler = source.slice(source.indexOf("export const saveConversion"));
 
 test("conversion writes use the database atomic quota primitive", () => {
@@ -31,4 +32,12 @@ test("conversion writes validate bounded fields before reaching the database", (
   assert.match(source, /status: 16/);
   assert.match(source, /validator\(validateConversionInput\)/);
   assert.match(source, /\["ok", "issues"\]\.includes\(status\)/);
+});
+
+test("conversion database boundary has an atomic burst-rate limit", () => {
+  assert.match(migration, /pg_advisory_xact_lock\(hashtextextended\('conversion:' \|\| p_user_id, 0\)\)/);
+  assert.match(migration, /created_at >= v_window_start/);
+  assert.match(migration, /if v_recent >= 60 then/);
+  assert.match(migration, /Conversion rate limit reached/);
+  assert.match(migration, /revoke all on function public\.consume_conversion/);
 });
