@@ -20,3 +20,15 @@ test("conversion reads remain explicitly scoped to the authenticated user", () =
   assert.match(source, /getQuota = createServerFn[\s\S]*?context\.userId/, "getQuota must derive its user id from authenticated middleware context");
   assert.match(source, /listConversions = createServerFn[\s\S]*?context\.userId/, "listConversions must derive its user id from authenticated middleware context");
 });
+
+test("conversion writes validate bounded fields before reaching the database", () => {
+  assert.match(source, /MAX_CONVERSION_FIELD_LENGTHS = \{/);
+  assert.match(source, /invoiceId: 100/);
+  assert.match(source, /supplier: 50/);
+  assert.match(source, /customer: 50/);
+  assert.match(source, /total: 50/);
+  assert.match(source, /currency: 3/);
+  assert.match(source, /status: 16/);
+  assert.match(source, /validator\(validateConversionInput\)/);
+  assert.match(source, /\["ok", "issues"\]\.includes\(status\)/);
+});
