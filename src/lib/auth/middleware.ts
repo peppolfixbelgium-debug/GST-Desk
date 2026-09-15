@@ -12,12 +12,10 @@ export const authMiddleware = createMiddleware({ type: "function" })
   })
   .server(async ({ next, context }) => {
     const { assertSameSiteRequest } = await import("./isolation.server");
-    const { getSessionUser } = await import("./verify.server");
+    const { getSessionUser, requireUserId } = await import("./verify.server");
     assertSameSiteRequest();
     const user = await getSessionUser(context.bearerToken);
-    if (!user) {
-      const { UnauthorizedError } = await import("./verify.server");
-      throw new UnauthorizedError();
-    }
-    return next({ context: { userId: user.id, userEmail: user.email } });
+    if (user) return next({ context: { userId: user.id, userEmail: user.email } });
+    const userId = await requireUserId(context.bearerToken);
+    return next({ context: { userId, userEmail: null } });
   });
