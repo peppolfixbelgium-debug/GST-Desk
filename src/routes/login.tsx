@@ -28,7 +28,7 @@ function Login() {
       }
       window.location.href = "/converter";
     } catch (e) {
-      setError(e instanceof Error ? e.message : "Sign-in failed");
+      setError(e instanceof Error ? e.message : "Authentication failed");
     } finally {
       setBusy(false);
     }
@@ -38,12 +38,13 @@ function Login() {
     <Shell>
       <div className="mx-auto grid min-h-[70dvh] max-w-md place-items-center px-4 py-16">
         <div className="w-full rounded-lg border border-line bg-surface p-6">
-          <h1 className="text-2xl">Sign in</h1>
+          <h1 className="text-2xl">{mode === "up" ? "Create your account" : "Sign in"}</h1>
           <p className="mt-2 text-sm text-muted">
-            Fixing invoices requires an account. Free: 5 GST invoices per calendar month, reset automatically.
+            Create a free account to fix GST invoices. You get 5 GST invoices per calendar month.
           </p>
+
           {authEnabled ? (
-            <div className="mt-6 space-y-2">
+            <div className="mt-6">
               {GROK_PROVIDERS.map((p) => (
                 <Button
                   key={p.providerId}
@@ -56,14 +57,14 @@ function Login() {
                 </Button>
               ))}
             </div>
-          ) : (
-            <p className="mt-4 text-sm text-muted">Sign-in is disabled.</p>
-          )}
+          ) : null}
+
           <div className="my-6 flex items-center gap-3 text-[11px] uppercase tracking-wide text-muted">
             <span className="h-px flex-1 bg-line" />
-            Email
+            Or use email
             <span className="h-px flex-1 bg-line" />
           </div>
+
           {mode === "up" ? (
             <label className="mb-3 block text-xs text-muted">
               Name
@@ -72,13 +73,7 @@ function Login() {
           ) : null}
           <label className="mb-3 block text-xs text-muted">
             Email
-            <Input
-              className="mt-1"
-              type="email"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              autoComplete="email"
-            />
+            <Input className="mt-1" type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="email" />
           </label>
           <label className="mb-4 block text-xs text-muted">
             Password
@@ -94,10 +89,14 @@ function Login() {
           <Button className="w-full" disabled={busy || !email || !password} onClick={onEmail}>
             {mode === "up" ? "Create account" : "Continue with email"}
           </Button>
+
           <button
             type="button"
-            className="mt-4 text-sm text-accent underline"
-            onClick={() => setMode(mode === "up" ? "in" : "up")}
+            className="mt-4 w-full text-center text-sm text-accent underline"
+            onClick={() => {
+              setError(null);
+              setMode(mode === "up" ? "in" : "up");
+            }}
           >
             {mode === "up" ? "Already have an account? Sign in" : "New here? Create an account"}
           </button>
