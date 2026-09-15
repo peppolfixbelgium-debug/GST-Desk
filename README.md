@@ -45,3 +45,4 @@ GST Desk is being hardened from a Grok-built prototype into a production SaaS wi
 See GitHub issues for the active workstreams.
 
 <!-- production deploy trigger: direct Google OAuth -->
+<!-- production redeploy trigger: verify corrected DATABASE_URL -->
