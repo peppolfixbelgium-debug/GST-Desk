@@ -42,8 +42,7 @@ function Login() {
     setError(null);
     trackAcquisition({ event: "sign_in_started" });
     try {
-      await signIn(providerId, { callbackURL: "/converter", errorCallbackURL: "/login" });
-      trackAcquisition({ event: "sign_in_completed" });
+      await signIn(providerId, { callbackURL: "/converter?auth=completed", errorCallbackURL: "/login" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-in failed");
       setBusy(false);
