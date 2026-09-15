@@ -22,6 +22,7 @@ export const authEnabled =
 export { GROK_PROVIDERS };
 
 const BEARER_KEY = "grok-auth.bearer-token";
+const PRODUCTION_ORIGIN = "https://gst-desk.vercel.app";
 
 export function getBearerToken(): string | null {
   if (typeof window === "undefined") return null;
@@ -57,6 +58,20 @@ export async function signIn(
 ): Promise<void> {
   const callbackURL = opts.callbackURL ?? "/";
   const errorCallbackURL = opts.errorCallbackURL ?? "/";
+
+  // OAuth state is host-bound. Always start production Google sign-in on the
+  // same canonical origin that receives the callback, even when the user opens
+  // a Vercel deployment/preview URL.
+  if (
+    typeof window !== "undefined" &&
+    import.meta.env.MODE === "production" &&
+    !inLivePreview() &&
+    window.location.origin !== PRODUCTION_ORIGIN
+  ) {
+    const destination = new URL(callbackURL, PRODUCTION_ORIGIN);
+    window.location.href = destination.toString();
+    return;
+  }
 
   const popup = inLivePreview() ? openSignInPopup(providerId) : null;
 
