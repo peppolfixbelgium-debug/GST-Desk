@@ -4,6 +4,7 @@ import { GROK_PROVIDERS, authClient, authEnabled, signIn } from "@/lib/auth/clie
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Shell } from "@/components/shell";
+import { trackAcquisition } from "@/lib/analytics/acquisition";
 
 export const Route = createFileRoute("/login")({ component: Login });
 
@@ -18,6 +19,7 @@ function Login() {
   const onEmail = async () => {
     setBusy(true);
     setError(null);
+    trackAcquisition({ event: "sign_in_started" });
     try {
       if (mode === "up") {
         const { error: err } = await authClient.signUp.email({ email, password, name: name || email.split("@")[0] });
@@ -26,6 +28,7 @@ function Login() {
         const { error: err } = await authClient.signIn.email({ email, password });
         if (err) throw new Error(err.message);
       }
+      trackAcquisition({ event: "sign_in_completed" });
       window.location.href = "/converter";
     } catch (e) {
       setError(e instanceof Error ? e.message : "Authentication failed");
@@ -37,8 +40,10 @@ function Login() {
   const onOAuth = async (providerId: string) => {
     setBusy(true);
     setError(null);
+    trackAcquisition({ event: "sign_in_started" });
     try {
       await signIn(providerId, { callbackURL: "/converter", errorCallbackURL: "/login" });
+      trackAcquisition({ event: "sign_in_completed" });
     } catch (e) {
       setError(e instanceof Error ? e.message : "Sign-in failed");
       setBusy(false);
