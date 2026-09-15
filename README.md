@@ -43,3 +43,5 @@ GST Desk is being hardened from a Grok-built prototype into a production SaaS wi
 - [ ] Pricing, legal and acquisition launch package approved
 
 See GitHub issues for the active workstreams.
+
+<!-- production deploy trigger: direct Google OAuth -->
