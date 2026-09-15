@@ -17,7 +17,6 @@ import { emailAndPasswordEnabled } from "./email-password";
 import { GATE_PROVIDER_ID, gateIdentitySessions } from "./gate-session.server";
 import { GROK_PROVIDERS } from "./providers";
 import { pgliteDialect } from "./pglite-dialect";
-import { PREVIEW_ALLOWED_HOSTS } from "./preview";
 
 void ensureDbReady();
 
@@ -41,29 +40,18 @@ const googleClientSecret = env("GOOGLE_CLIENT_SECRET");
 export const authConfigured =
   !authDisabled && Boolean(googleClientId && googleClientSecret);
 
-const explicitBaseURL = env("BETTER_AUTH_URL");
-const previewAllowedHosts: string[] = [...PREVIEW_ALLOWED_HOSTS];
-const LOCAL_DEV_ORIGINS: string[] = [
+// Production OAuth is deliberately pinned to the canonical production host.
+// This prevents a login started on a Vercel preview/deployment hostname from
+// setting an OAuth state cookie on one host and receiving the callback on
+// another host, which Better Auth correctly rejects as a state mismatch.
+const PRODUCTION_BASE_URL = "https://gst-desk.vercel.app";
+const baseURL = PRODUCTION_BASE_URL;
+
+const trustedOrigins: string[] = [
+  PRODUCTION_BASE_URL,
   "http://localhost:8080",
   "http://127.0.0.1:8080",
   "http://[::1]:8080",
-];
-const vercelOrigins = [
-  env("VERCEL_URL") ? `https://${env("VERCEL_URL")}` : undefined,
-  env("VERCEL_PROJECT_PRODUCTION_URL") ? `https://${env("VERCEL_PROJECT_PRODUCTION_URL")}` : undefined,
-].filter((origin): origin is string => Boolean(origin));
-const baseURL = explicitBaseURL ?? {
-  allowedHosts: [...previewAllowedHosts, "localhost", "127.0.0.1", "[::1]"],
-  protocol: "auto" as const,
-  fallback: "http://localhost:8080",
-};
-
-const trustedOrigins: string[] = [
-  ...(explicitBaseURL ? [explicitBaseURL] : []),
-  ...vercelOrigins,
-  ...LOCAL_DEV_ORIGINS,
-  ...previewAllowedHosts,
-  ...previewAllowedHosts.flatMap((host) => [`https://${host}`, `http://${host}`]),
 ];
 
 const databaseUrl = env("DATABASE_URL");
@@ -97,14 +85,22 @@ export const auth = betterAuth({
           google: {
             clientId: googleClientId as string,
             clientSecret: googleClientSecret as string,
-            redirectURI: "https://gst-desk.vercel.app/api/auth/callback/google",
+            redirectURI: `${PRODUCTION_BASE_URL}/api/auth/callback/google`,
           },
         },
       }
     : {}),
   advanced: {
-    useSecureCookies: false,
-    defaultCookieAttributes: { secure: true, sameSite: "lax", path: "/" },
+    // Use a GST Desk-specific cookie namespace so stale cookies from the old
+    // Grok-auth flow cannot collide with the current OAuth state/session.
+    cookiePrefix: "gst-desk-auth",
+    useSecureCookies: true,
+    defaultCookieAttributes: {
+      httpOnly: true,
+      secure: true,
+      sameSite: "lax",
+      path: "/",
+    },
     cookies: {
       session_token: { name: SESSION_TOKEN_COOKIE },
       session_data: { name: "__Host-grok-auth.session_data" },
