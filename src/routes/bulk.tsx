@@ -8,7 +8,13 @@ import { useCurrentUserState } from "@/lib/auth/use-current-user";
 import { getQuota, saveConversion, type Quota } from "@/lib/gst/conversions";
 import { autoFix } from "@/lib/gst/fix";
 import { parseInvoice, validateGst } from "@/lib/gst/validate";
-import { validateBulkFiles, MAX_BULK_FILES, MAX_BULK_OUTPUT_FILES } from "@/lib/security/resource-limits";
+import {
+  assertJsonTextWithinLimit,
+  validateBulkFiles,
+  MAX_BULK_FILES,
+  MAX_BULK_OUTPUT_BYTES,
+  MAX_BULK_OUTPUT_FILES,
+} from "@/lib/security/resource-limits";
 
 export const Route = createFileRoute("/bulk")({ component: BulkPage });
 
@@ -55,22 +61,32 @@ function BulkPage() {
     if (remaining <= 0) { setNotice("Monthly free quota used. It resets on the 1st."); return; }
     setBusy(true); setNotice(null);
     const zip = new JSZip();
+    let outputBytes = 0;
+    let outputFiles = 0;
     const next: Row[] = [];
     const list = inputFiles.slice(0, Math.min(remaining, MAX_BULK_FILES, MAX_BULK_OUTPUT_FILES));
     for (const file of list) {
       try {
         const text = await file.text();
+        assertJsonTextWithinLimit(text);
         const parsed = parseInvoice(text);
         if (!parsed.invoice) throw new Error(parsed.error || "Invalid JSON");
         const { invoice } = autoFix(parsed.invoice);
         const blockers = validateGst(invoice).filter((i) => i.severity === "error");
+        const output = JSON.stringify(invoice, null, 2);
+        const outputSize = new TextEncoder().encode(output).byteLength;
+        if (outputFiles >= MAX_BULK_OUTPUT_FILES || outputBytes + outputSize > MAX_BULK_OUTPUT_BYTES) {
+          throw new Error("Bulk output limit reached. Download the completed batch and continue with fewer files.");
+        }
         await saveConversion({ data: { invoiceId: invoice.DocDtls.No, supplier: invoice.SellerDtls.Gstin, customer: invoice.BuyerDtls.Gstin, total: String(invoice.ValDtls.TotInvVal), currency: "INR", status: blockers.length ? "issues" : "ok" } });
-        zip.file(`${invoice.DocDtls.No.replaceAll("/", "-")}.json`, JSON.stringify(invoice, null, 2));
+        zip.file(`${invoice.DocDtls.No.replaceAll("/", "-")}.json`, output);
+        outputBytes += outputSize;
+        outputFiles += 1;
         next.push({ name: file.name, invoiceId: invoice.DocDtls.No, status: blockers.length ? `${blockers.length} left` : "ok" });
       } catch (e) { next.push({ name: file.name, invoiceId: "", status: e instanceof Error ? e.message : "failed" }); }
     }
     setRows(next);
-    if (next.some((row) => row.invoiceId)) {
+    if (outputFiles > 0) {
       const blob = await zip.generateAsync({ type: "blob" });
       const url = URL.createObjectURL(blob); const a = document.createElement("a"); a.href = url; a.download = "gst-irn-json.zip"; a.click(); URL.revokeObjectURL(url);
     }
