@@ -13,6 +13,10 @@ test("conversion writes use the database atomic quota primitive", () => {
 });
 
 test("conversion reads remain explicitly scoped to the authenticated user", () => {
-  const userScopedQueries = (source.match(/where user_id = \$\{context\.userId\}/g) ?? []).length;
-  assert.ok(userScopedQueries >= 2, `expected quota/history queries to scope by context.userId; found ${userScopedQueries}`);
+  const quotaUserScope = /from conversions where user_id = \$\{userId\}/.test(source);
+  const historyUserScope = /from conversions where user_id = \$\{context\.userId\}/.test(source);
+  assert.ok(quotaUserScope, "quota query must scope by the authenticated user id");
+  assert.ok(historyUserScope, "history query must scope by the authenticated user id");
+  assert.match(source, /getQuota = createServerFn[\s\S]*?context\.userId/, "getQuota must derive its user id from authenticated middleware context");
+  assert.match(source, /listConversions = createServerFn[\s\S]*?context\.userId/, "listConversions must derive its user id from authenticated middleware context");
 });
