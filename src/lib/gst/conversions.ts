@@ -34,32 +34,26 @@ type AccountPlan = {
   role: AccountRole;
 };
 
-async function resolveAccountPlan(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<AccountPlan> {
-  const rows = await sql<{
-    email: string;
-    plan_id: PlanId | null;
-    billing_cycle: BillingCycle | null;
-    status: string | null;
-  }>`
-    select u.email,
-           ap.plan_id,
-           ap.billing_cycle,
-           coalesce(ap.status, 'active') as status
-    from "user" u
-    left join public.account_plans ap on ap.user_id = u.id
-    where u.id = ${userId}
+async function resolveAccountPlan(sql: Awaited<ReturnType<typeof getSql>>, userId: string, userEmail: string | null): Promise<AccountPlan> {
+  const role = accountRoleForEmail(userEmail);
+  if (role === "admin") return { planId: "admin", billingCycle: "annual", status: "active", role };
+
+  const rows = await sql<{ plan_id: PlanId | null; billing_cycle: BillingCycle | null; status: string | null }>`
+    select plan_id, billing_cycle, coalesce(status, 'active') as status
+    from public.account_plans
+    where user_id = ${userId}
     limit 1
   `;
-  const email = rows[0]?.email ?? null;
-  const role = accountRoleForEmail(email);
-  const planId = role === "admin" ? "admin" : rows[0]?.plan_id ?? "free";
-  const billingCycle = rows[0]?.billing_cycle ?? "monthly";
-  const status = rows[0]?.status ?? "active";
-  return { planId, billingCycle, status, role };
+  return {
+    planId: rows[0]?.plan_id ?? "free",
+    billingCycle: rows[0]?.billing_cycle ?? "monthly",
+    status: rows[0]?.status ?? "active",
+    role,
+  };
 }
 
-async function quotaForUser(sql: Awaited<ReturnType<typeof getSql>>, userId: string): Promise<Quota> {
-  const account = await resolveAccountPlan(sql, userId);
+async function quotaForUser(sql: Awaited<ReturnType<typeof getSql>>, userId: string, userEmail: string | null): Promise<Quota> {
+  const account = await resolveAccountPlan(sql, userId, userEmail);
   const entitlement = planEntitlement(account.planId);
   const rows = await sql<{ n: number }>`
     select count(*)::int as n
@@ -85,7 +79,7 @@ async function quotaForUser(sql: Awaited<ReturnType<typeof getSql>>, userId: str
 
 export const getQuota = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
-  .handler(async ({ context }) => quotaForUser(await getSql(), context.userId));
+  .handler(async ({ context }) => quotaForUser(await getSql(), context.userId, context.userEmail));
 
 export const listConversions = createServerFn({ method: "GET" })
   .middleware([authMiddleware])
@@ -124,7 +118,7 @@ export const saveConversion = createServerFn({ method: "POST" })
   .validator((data: { invoiceId: string; supplier: string; customer: string; total: string; currency: string; status: string }) => data)
   .handler(async ({ context, data }) => {
     const sql = await getSql();
-    const account = await resolveAccountPlan(sql, context.userId);
+    const account = await resolveAccountPlan(sql, context.userId, context.userEmail);
     const entitlement = planEntitlement(account.planId);
     if (account.status !== "active") throw new Error("Your subscription is not active. Please review your plan before downloading.");
 
@@ -142,6 +136,6 @@ export const saveConversion = createServerFn({ method: "POST" })
     `;
     const id = Number(inserted[0]?.id ?? 0);
     if (!id) throw new Error("Conversion could not be saved.");
-    const quota = await quotaForUser(sql, context.userId);
+    const quota = await quotaForUser(sql, context.userId, context.userEmail);
     return { id, ...quota };
   });
