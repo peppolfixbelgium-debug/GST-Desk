@@ -1,18 +1,16 @@
 /**
- * Upstream identity provider used for federated sign-in.
+ * Social identity providers used by the app.
  *
- * Google is intentionally the only social sign-in option. Email/password
- * account creation and sign-in are handled separately by Better Auth.
+ * Google is the only social sign-in option. Email/password account creation
+ * and sign-in are handled separately by Better Auth.
  */
 export type GrokProvider = {
-  /** This app's local provider id; also the OAuth callback path segment. */
-  providerId: string;
-  /** Upstream identity hint sent to the auth broker. */
-  idp: string;
+  /** Better Auth provider id and OAuth callback path segment. */
+  providerId: "google";
   /** Human label for the sign-in button. */
   label: string;
 };
 
 export const GROK_PROVIDERS: readonly GrokProvider[] = [
-  { providerId: "grok-google", idp: "google", label: "Google" },
+  { providerId: "google", label: "Google" },
 ];
