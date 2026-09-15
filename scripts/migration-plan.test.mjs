@@ -59,6 +59,7 @@ test("the production migration directory contains only root SQL migrations", () 
     "0003_india_defaults.sql",
     "0004_better_auth_quota.sql",
     "0005_better_auth_server_only.sql",
+    "0006_account_plans.sql",
   ]);
   assert.ok(readdirSync(join(migrationsDir, "auth")).includes(AUTH_MIGRATION));
 });
