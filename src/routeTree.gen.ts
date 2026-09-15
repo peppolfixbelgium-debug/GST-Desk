@@ -14,6 +14,7 @@ import { Route as BulkRouteImport } from './routes/bulk'
 import { Route as ConverterRouteImport } from './routes/converter'
 import { Route as DashboardRouteImport } from './routes/dashboard'
 import { Route as LoginRouteImport } from './routes/login'
+import { Route as MissionControlRouteImport } from './routes/mission-control'
 import { Route as PricingRouteImport } from './routes/pricing'
 import { Route as PrivacyRouteImport } from './routes/privacy'
 import { Route as SecurityRouteImport } from './routes/security'
@@ -47,6 +48,11 @@ const DashboardRoute = DashboardRouteImport.update({
 const LoginRoute = LoginRouteImport.update({
   id: '/login',
   path: '/login',
+  getParentRoute: () => rootRouteImport,
+} as any)
+const MissionControlRoute = MissionControlRouteImport.update({
+  id: '/mission-control',
+  path: '/mission-control',
   getParentRoute: () => rootRouteImport,
 } as any)
 const PricingRoute = PricingRouteImport.update({
@@ -101,6 +107,7 @@ export interface FileRoutesByFullPath {
   '/converter': typeof ConverterRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/mission-control': typeof MissionControlRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
@@ -117,6 +124,7 @@ export interface FileRoutesByTo {
   '/converter': typeof ConverterRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/mission-control': typeof MissionControlRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
@@ -134,6 +142,7 @@ export interface FileRoutesById {
   '/converter': typeof ConverterRoute
   '/dashboard': typeof DashboardRoute
   '/login': typeof LoginRoute
+  '/mission-control': typeof MissionControlRoute
   '/pricing': typeof PricingRoute
   '/privacy': typeof PrivacyRoute
   '/security': typeof SecurityRoute
@@ -152,6 +161,7 @@ export interface FileRouteTypes {
     | '/converter'
     | '/dashboard'
     | '/login'
+    | '/mission-control'
     | '/pricing'
     | '/privacy'
     | '/security'
@@ -168,6 +178,7 @@ export interface FileRouteTypes {
     | '/converter'
     | '/dashboard'
     | '/login'
+    | '/mission-control'
     | '/pricing'
     | '/privacy'
     | '/security'
@@ -184,6 +195,7 @@ export interface FileRouteTypes {
     | '/converter'
     | '/dashboard'
     | '/login'
+    | '/mission-control'
     | '/pricing'
     | '/privacy'
     | '/security'
@@ -201,6 +213,7 @@ export interface RootRouteChildren {
   ConverterRoute: typeof ConverterRoute
   DashboardRoute: typeof DashboardRoute
   LoginRoute: typeof LoginRoute
+  MissionControlRoute: typeof MissionControlRoute
   PricingRoute: typeof PricingRoute
   PrivacyRoute: typeof PrivacyRoute
   SecurityRoute: typeof SecurityRoute
@@ -247,6 +260,13 @@ declare module '@tanstack/react-router' {
       path: '/login'
       fullPath: '/login'
       preLoaderRoute: typeof LoginRouteImport
+      parentRoute: typeof rootRouteImport
+    }
+    '/mission-control': {
+      id: '/mission-control'
+      path: '/mission-control'
+      fullPath: '/mission-control'
+      preLoaderRoute: typeof MissionControlRouteImport
       parentRoute: typeof rootRouteImport
     }
     '/pricing': {
@@ -321,6 +341,7 @@ const rootRouteChildren: RootRouteChildren = {
   ConverterRoute: ConverterRoute,
   DashboardRoute: DashboardRoute,
   LoginRoute: LoginRoute,
+  MissionControlRoute: MissionControlRoute,
   PricingRoute: PricingRoute,
   PrivacyRoute: PrivacyRoute,
   SecurityRoute: SecurityRoute,
