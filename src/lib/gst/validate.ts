@@ -44,9 +44,11 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     }
   }
 
-  const pos = buyer?.Pos || buyer?.Stcd;
+  // Place of supply is a transaction fact. Never substitute buyer registration state.
+  const pos = buyer?.Pos;
   if (!pos || !STATES[pos]) out.push(issue("2243", "BuyerDtls.Pos"));
-  const intra = gstinState(seller?.Gstin ?? "") === pos;
+  const sellerState = gstinState(seller?.Gstin ?? "");
+  const intra = Boolean(pos && sellerState && sellerState === pos);
   const items = inv.ItemList ?? [];
   if (!items.length) out.push({ code: "2003", path: "ItemList", nic: "No line items", hint: "At least one ItemList row is required.", severity: "error" });
 
@@ -64,13 +66,15 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     }
     if (!UQC.includes(it.Unit as (typeof UQC)[number])) out.push(issue("2177", `${path}.Unit`));
     const expectedTax = money(it.AssAmt * (it.GstRt / 100));
-    if (intra) {
-      const half = money(expectedTax / 2);
-      if (it.IgstAmt > 0) out.push({ ...issue("2172", `${path}.IgstAmt`), fix: "intra-tax" });
-      if (Math.abs(it.CgstAmt - half) > 0.05 || Math.abs(it.SgstAmt - half) > 0.05) out.push({ ...issue("2234", `${path}.CgstAmt`), fix: "intra-tax" });
-    } else {
-      if (it.CgstAmt > 0 || it.SgstAmt > 0) out.push({ ...issue("2174", `${path}.CgstAmt`), fix: "inter-tax" });
-      if (Math.abs(it.IgstAmt - expectedTax) > 0.05) out.push({ ...issue("2234", `${path}.IgstAmt`), fix: "inter-tax" });
+    if (pos && STATES[pos]) {
+      if (intra) {
+        const half = money(expectedTax / 2);
+        if (it.IgstAmt > 0) out.push({ ...issue("2172", `${path}.IgstAmt`), fix: "intra-tax" });
+        if (Math.abs(it.CgstAmt - half) > 0.05 || Math.abs(it.SgstAmt - half) > 0.05) out.push({ ...issue("2234", `${path}.CgstAmt`), fix: "intra-tax" });
+      } else {
+        if (it.CgstAmt > 0 || it.SgstAmt > 0) out.push({ ...issue("2174", `${path}.CgstAmt`), fix: "inter-tax" });
+        if (Math.abs(it.IgstAmt - expectedTax) > 0.05) out.push({ ...issue("2234", `${path}.IgstAmt`), fix: "inter-tax" });
+      }
     }
     const lineTot = money(it.AssAmt + it.IgstAmt + it.CgstAmt + it.SgstAmt + it.CesAmt + (it.OthChrg || 0));
     if (Math.abs(lineTot - it.TotItemVal) > 0.05) out.push({ code: "2234", path: `${path}.TotItemVal`, nic: "Item total mismatch", hint: `TotItemVal should be ${lineTot.toFixed(2)}.`, severity: "error", fix: "totals" });
@@ -84,7 +88,7 @@ export function validateGst(inv: GstInvoice): NicIssue[] {
     if (Math.abs(money(sgst) - v.SgstVal) > 0.05) out.push({ ...issue("2183", "ValDtls.SgstVal"), fix: "totals" });
     if (Math.abs(money(igst) - v.IgstVal) > 0.05) out.push({ ...issue("2185", "ValDtls.IgstVal"), fix: "totals" });
     const calc = money(v.AssVal + v.CgstVal + v.SgstVal + v.IgstVal + v.CesVal + v.StCesVal + v.OthChrg - v.Discount + v.RndOffAmt);
-    if (Math.abs(calc - v.TotInvVal) > 0.05) out.push({ ...issue("2189", "ValDtls.TotInvVal"), fix: "round-off" });
+    if (Math.abs(calc - v.TotInvVal) > 0.05) out.push({ code: "2189", path: "ValDtls.TotInvVal", nic: "Invalid total invoice value", hint: `Total invoice value should reconcile to ${calc.toFixed(2)}.`, severity: "error", fix: "round-off" });
     if (Math.abs(v.RndOffAmt) > 99.99) out.push({ code: "2189", path: "ValDtls.RndOffAmt", nic: "Round off out of range", hint: "RndOffAmt must be between -99.99 and 99.99.", severity: "error", fix: "round-off" });
   }
   const value = v?.TotInvVal ?? 0;
