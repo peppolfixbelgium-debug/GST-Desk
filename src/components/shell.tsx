@@ -39,68 +39,28 @@ function AuthSlot() {
   const { user, isPending } = useCurrentUserState();
   if (isPending) return <div className="h-8 w-8 animate-pulse rounded-full bg-line" />;
   if (user) return <UserButton />;
-  return (
-    <Link to="/login" className="text-sm text-fg hover:text-accent">
-      Sign in
-    </Link>
-  );
+  return <Link to="/login" className="text-sm text-fg hover:text-accent">Sign in</Link>;
 }
 
 export function Shell({ children }: { children: ReactNode }) {
   const { dark, toggle } = useTheme();
   const [lang, setLang] = useLang();
   const [open, setOpen] = useState(false);
-
   return (
     <div className="min-h-dvh bg-bg text-fg">
       <header className="sticky top-0 z-20 border-b border-line bg-bg/90 backdrop-blur">
         <div className="mx-auto flex h-16 max-w-6xl items-center justify-between px-4">
-          <Link to="/" className="flex items-center gap-2">
-            <img src="/logo.svg" alt="" className="h-8 w-8 rounded-full border border-line bg-surface" />
-            <span className="font-display text-lg tracking-tight">{t(lang, "product")}</span>
-          </Link>
+          <Link to="/" className="flex items-center gap-2"><img src="/logo.svg" alt="" className="h-8 w-8 rounded-full border border-line bg-surface" /><span className="font-display text-lg tracking-tight">{t(lang, "product")}</span></Link>
           <nav className="hidden items-center gap-6 text-sm md:flex">
-            <Link to="/converter" className="text-muted hover:text-fg">{t(lang, "convert")}</Link>
-            <Link to="/validate" className="text-muted hover:text-fg">{t(lang, "validator")}</Link>
-            <Link to="/bulk" className="text-muted hover:text-fg">{t(lang, "bulk")}</Link>
-            <Link to="/pricing" className="text-muted hover:text-fg">{t(lang, "pricing")}</Link>
-            <SignedIn>
-              <Link to="/dashboard" className="text-muted hover:text-fg">{t(lang, "dashboard")}</Link>
-              <Link to="/mission-control" search={(prev) => prev} className="text-muted hover:text-accent">Mission Control</Link>
-            </SignedIn>
+            <Link to="/converter" className="text-muted hover:text-fg">{t(lang, "convert")}</Link><Link to="/validate" className="text-muted hover:text-fg">{t(lang, "validator")}</Link><Link to="/bulk" className="text-muted hover:text-fg">{t(lang, "bulk")}</Link><Link to="/pricing" className="text-muted hover:text-fg">{t(lang, "pricing")}</Link>
+            <SignedIn><Link to="/dashboard" className="text-muted hover:text-fg">{t(lang, "dashboard")}</Link><a href="/mission-control" className="text-muted hover:text-accent">Mission Control</a></SignedIn>
           </nav>
-          <div className="flex items-center gap-2">
-            <div className="hidden overflow-hidden rounded-full border border-line text-[11px] md:flex">
-              {LANGS.map((l) => (
-                <button key={l} type="button" onClick={() => setLang(l)} className={`px-2 py-1 uppercase ${lang === l ? "bg-accent text-accent-fg" : "text-muted"}`}>{l}</button>
-              ))}
-            </div>
-            <button type="button" aria-label="Toggle theme" onClick={toggle} className="grid h-9 w-9 place-items-center rounded-full border border-line">{dark ? <Sun className="size-4" /> : <Moon className="size-4" />}</button>
-            <AuthSlot />
-            <button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-line md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu"><span className="block h-px w-4 bg-fg" /></button>
-          </div>
+          <div className="flex items-center gap-2"><div className="hidden overflow-hidden rounded-full border border-line text-[11px] md:flex">{LANGS.map((l) => <button key={l} type="button" onClick={() => setLang(l)} className={`px-2 py-1 uppercase ${lang === l ? "bg-accent text-accent-fg" : "text-muted"}`}>{l}</button>)}</div><button type="button" aria-label="Toggle theme" onClick={toggle} className="grid h-9 w-9 place-items-center rounded-full border border-line">{dark ? <Sun className="size-4" /> : <Moon className="size-4" />}</button><AuthSlot /><button type="button" className="grid h-9 w-9 place-items-center rounded-full border border-line md:hidden" onClick={() => setOpen((v) => !v)} aria-label="Menu"><span className="block h-px w-4 bg-fg" /></button></div>
         </div>
-        {open ? (
-          <div className="flex flex-col gap-3 border-t border-line px-4 py-3 text-sm md:hidden">
-            <Link to="/converter" onClick={() => setOpen(false)}>{t(lang, "convert")}</Link>
-            <Link to="/validate" onClick={() => setOpen(false)}>{t(lang, "validator")}</Link>
-            <Link to="/bulk" onClick={() => setOpen(false)}>{t(lang, "bulk")}</Link>
-            <Link to="/pricing" onClick={() => setOpen(false)}>{t(lang, "pricing")}</Link>
-            <SignedIn>
-              <Link to="/dashboard" onClick={() => setOpen(false)}>{t(lang, "dashboard")}</Link>
-              <Link to="/mission-control" search={(prev) => prev} onClick={() => setOpen(false)}>Mission Control</Link>
-            </SignedIn>
-            <SignedOut><Link to="/login" onClick={() => setOpen(false)}>{t(lang, "signIn")}</Link></SignedOut>
-          </div>
-        ) : null}
+        {open ? <div className="flex flex-col gap-3 border-t border-line px-4 py-3 text-sm md:hidden"><Link to="/converter" onClick={() => setOpen(false)}>{t(lang, "convert")}</Link><Link to="/validate" onClick={() => setOpen(false)}>{t(lang, "validator")}</Link><Link to="/bulk" onClick={() => setOpen(false)}>{t(lang, "bulk")}</Link><Link to="/pricing" onClick={() => setOpen(false)}>{t(lang, "pricing")}</Link><SignedIn><Link to="/dashboard" onClick={() => setOpen(false)}>{t(lang, "dashboard")}</Link><a href="/mission-control" onClick={() => setOpen(false)}>Mission Control</a></SignedIn><SignedOut><Link to="/login" onClick={() => setOpen(false)}>{t(lang, "signIn")}</Link></SignedOut></div> : null}
       </header>
       <main>{children}</main>
-      <footer className="border-t border-line">
-        <div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-8 text-xs text-muted">
-          <p>JSON ready for NIC / your GSP. We do not file the IRN.</p>
-          <div className="flex gap-4"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/security">Security</Link></div>
-        </div>
-      </footer>
+      <footer className="border-t border-line"><div className="mx-auto flex max-w-6xl flex-wrap items-center justify-between gap-3 px-4 py-8 text-xs text-muted"><p>JSON ready for NIC / your GSP. We do not file the IRN.</p><div className="flex gap-4"><Link to="/terms">Terms</Link><Link to="/privacy">Privacy</Link><Link to="/security">Security</Link></div></div></footer>
     </div>
   );
 }
