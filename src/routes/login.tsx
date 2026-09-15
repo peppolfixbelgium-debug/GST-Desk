@@ -34,6 +34,17 @@ function Login() {
     }
   };
 
+  const onOAuth = async (providerId: string) => {
+    setBusy(true);
+    setError(null);
+    try {
+      await signIn(providerId, { callbackURL: "/converter", errorCallbackURL: "/login" });
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Sign-in failed");
+      setBusy(false);
+    }
+  };
+
   return (
     <Shell>
       <div className="mx-auto grid min-h-[70dvh] max-w-md place-items-center px-4 py-16">
@@ -51,7 +62,8 @@ function Login() {
                   type="button"
                   variant="outline"
                   className="w-full"
-                  onClick={() => signIn(p.providerId, { callbackURL: "/converter" })}
+                  disabled={busy}
+                  onClick={() => void onOAuth(p.providerId)}
                 >
                   Continue with {p.label}
                 </Button>
@@ -85,14 +97,15 @@ function Login() {
               autoComplete={mode === "up" ? "new-password" : "current-password"}
             />
           </label>
-          {error ? <p className="mb-3 text-sm text-danger">{error}</p> : null}
-          <Button className="w-full" disabled={busy || !email || !password} onClick={onEmail}>
+          {error ? <p className="mb-3 text-sm text-danger" role="alert">{error}</p> : null}
+          <Button className="w-full" disabled={busy || !email || !password} onClick={() => void onEmail()}>
             {mode === "up" ? "Create account" : "Continue with email"}
           </Button>
 
           <button
             type="button"
             className="mt-4 w-full text-center text-sm text-accent underline"
+            disabled={busy}
             onClick={() => {
               setError(null);
               setMode(mode === "up" ? "in" : "up");
