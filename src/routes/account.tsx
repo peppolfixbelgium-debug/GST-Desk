@@ -1,0 +1,98 @@
+import { createFileRoute, Link } from "@tanstack/react-router";
+import { ArrowRight, CheckCircle2, CreditCard, FileCheck2, History, LogOut, ShieldCheck, Sparkles, UserRound } from "lucide-react";
+import { useEffect, useState } from "react";
+import { Shell } from "@/components/shell";
+import { Button } from "@/components/ui/button";
+import { RedirectToSignIn } from "@/lib/auth/gates";
+import { signOut } from "@/lib/auth/client";
+import { useCurrentUserState } from "@/lib/auth/use-current-user";
+import { getQuota, listConversions, type ConversionRow, type Quota } from "@/lib/gst/conversions";
+
+export const Route = createFileRoute("/account")({ component: AccountPage });
+
+function AccountPage() {
+  const { user, isPending } = useCurrentUserState();
+  const [quota, setQuota] = useState<Quota | null>(null);
+  const [rows, setRows] = useState<ConversionRow[]>([]);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
+  const load = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const [currentQuota, history] = await Promise.all([getQuota(), listConversions()]);
+      setQuota(currentQuota);
+      setRows(history);
+    } catch (e) {
+      setError(e instanceof Error ? e.message : "Could not load your account.");
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    if (user) void load();
+  }, [user]);
+
+  if (isPending) {
+    return <Shell><div className="mx-auto max-w-6xl px-4 py-12"><div className="animate-pulse space-y-4"><div className="h-8 w-56 rounded bg-line"/><div className="h-36 rounded-2xl bg-surface"/><div className="h-64 rounded-2xl bg-surface"/></div></div></Shell>;
+  }
+  if (!user) return <RedirectToSignIn to="/login" />;
+
+  const initials = (user.displayName || user.primaryEmail || "G").split(/\s+/).map((x) => x[0]).join("").slice(0, 2).toUpperCase();
+  const pct = quota ? Math.min(100, Math.round((quota.used / Math.max(1, quota.limit)) * 100)) : 0;
+  const recent = rows.slice(0, 3);
+
+  return <Shell>
+    <div className="mx-auto max-w-6xl px-4 py-10">
+      <div className="flex flex-wrap items-end justify-between gap-4">
+        <div>
+          <p className="text-xs uppercase tracking-[0.2em] text-accent">Account</p>
+          <h1 className="mt-2 text-4xl tracking-tight">Your GST Desk account</h1>
+          <p className="mt-2 max-w-2xl text-sm leading-6 text-muted">Profile, plan, usage and security in one stable account center. This area is available to every signed-in customer.</p>
+        </div>
+        <div className="flex gap-2">
+          <Button variant="outline" onClick={() => void load()} disabled={loading}>{loading ? "Refreshing…" : "Refresh"}</Button>
+          <Button variant="outline" onClick={() => void signOut("/")}><LogOut className="mr-2 size-4"/>Sign out</Button>
+        </div>
+      </div>
+
+      {error ? <div className="mt-5 rounded-xl border border-danger p-4 text-sm text-danger">{error}<button className="ml-2 underline" onClick={() => void load()}>Retry</button></div> : null}
+
+      <div className="mt-8 grid gap-5 lg:grid-cols-[.8fr_1.7fr]">
+        <aside className="rounded-3xl border border-line bg-surface p-5">
+          <div className="flex items-center gap-4">
+            <div className="grid size-16 place-items-center rounded-2xl bg-accent text-xl font-semibold text-accent-fg">{initials}</div>
+            <div className="min-w-0"><p className="truncate text-lg font-semibold">{user.displayName || "GST Desk user"}</p><p className="truncate text-xs text-muted">{user.primaryEmail}</p></div>
+          </div>
+          <div className="mt-6 space-y-2">
+            <div className="flex items-center gap-3 rounded-xl bg-bg p-3 text-sm"><UserRound className="size-4 text-accent"/><span>Profile</span><CheckCircle2 className="ml-auto size-4 text-accent"/></div>
+            <div className="flex items-center gap-3 rounded-xl border border-line p-3 text-sm"><ShieldCheck className="size-4 text-accent"/><span>Secure session</span><CheckCircle2 className="ml-auto size-4 text-accent"/></div>
+            <div className="flex items-center gap-3 rounded-xl border border-line p-3 text-sm"><CreditCard className="size-4 text-accent"/><span>{quota?.planName || "Plan"}</span><span className="ml-auto text-xs text-muted">{quota?.billingCycle || "—"}</span></div>
+          </div>
+          {quota?.role === "admin" ? <div className="mt-6 rounded-2xl border border-accent/40 bg-accent/5 p-4"><p className="text-[10px] font-semibold uppercase tracking-[0.16em] text-accent">Founder access</p><p className="mt-1 text-xs leading-5 text-muted">Admin-only operational controls stay separate from the customer account.</p><Link to="/mission-control" className="mt-3 inline-flex items-center text-xs font-medium text-accent">Open Command Center <ArrowRight className="ml-1 size-3"/></Link></div> : null}
+        </aside>
+
+        <div className="space-y-5">
+          <section className="rounded-3xl border border-line bg-surface p-6">
+            <div className="flex flex-wrap items-start justify-between gap-4"><div><p className="text-xs uppercase tracking-[0.16em] text-muted">Usage overview</p><h2 className="mt-1 text-2xl">{quota?.planName || "Loading…"}</h2><p className="mt-1 text-sm text-muted">{quota?.billingCycle === "annual" ? "Annual billing" : "Monthly billing"} · {quota?.status || "Active"}</p></div><Link to="/pricing"><Button variant="outline">Compare plans <ArrowRight className="ml-2 size-4"/></Button></Link></div>
+            <div className="mt-6 grid gap-3 sm:grid-cols-3"><div className="rounded-2xl border border-line p-4"><p className="text-xs text-muted">Used</p><p className="mt-1 text-2xl font-semibold">{quota?.used ?? "—"}</p></div><div className="rounded-2xl border border-line p-4"><p className="text-xs text-muted">Remaining</p><p className="mt-1 text-2xl font-semibold">{quota?.remaining ?? "—"}</p></div><div className="rounded-2xl border border-line p-4"><p className="text-xs text-muted">Monthly limit</p><p className="mt-1 text-2xl font-semibold">{quota?.limit ?? "—"}</p></div></div>
+            {quota ? <><div className="mt-5 h-2.5 overflow-hidden rounded-full bg-line"><div className="h-full rounded-full bg-accent transition-[width] duration-500" style={{ width: `${pct}%` }}/></div><div className="mt-2 flex justify-between text-xs text-muted"><span>{pct}% used</span><span>Resets on the 1st</span></div></> : null}
+          </section>
+
+          <section className="grid gap-3 sm:grid-cols-3">
+            <Link to="/converter" className="rounded-2xl border border-line bg-surface p-5 transition hover:-translate-y-0.5 hover:border-accent"><FileCheck2 className="size-5 text-accent"/><h3 className="mt-3 font-medium">Fix JSON</h3><p className="mt-1 text-xs leading-5 text-muted">Diagnose, fix, validate and download.</p></Link>
+            <Link to="/validate" className="rounded-2xl border border-line bg-surface p-5 transition hover:-translate-y-0.5 hover:border-accent"><ShieldCheck className="size-5 text-accent"/><h3 className="mt-3 font-medium">Validate</h3><p className="mt-1 text-xs leading-5 text-muted">Check a payload without changing it.</p></Link>
+            <Link to="/pricing" className="rounded-2xl border border-line bg-surface p-5 transition hover:-translate-y-0.5 hover:border-accent"><Sparkles className="size-5 text-accent"/><h3 className="mt-3 font-medium">Explore plans</h3><p className="mt-1 text-xs leading-5 text-muted">See monthly and annual value side by side.</p></Link>
+          </section>
+        </div>
+      </div>
+
+      <section className="mt-6 rounded-3xl border border-line bg-surface">
+        <div className="flex flex-wrap items-center justify-between gap-3 border-b border-line p-5"><div><p className="text-xs uppercase tracking-[0.16em] text-muted">Recent activity</p><h2 className="mt-1 text-xl">Latest conversions</h2></div><Link to="/dashboard" className="text-xs font-medium text-accent">Open full history <ArrowRight className="ml-1 inline size-3"/></Link></div>
+        <div className="grid gap-3 p-4 md:grid-cols-3">{recent.length ? recent.map((r) => <div key={r.id} className="rounded-2xl border border-line p-4"><div className="flex items-center justify-between gap-3"><span className="font-mono text-[10px] text-muted">{r.invoiceId}</span><span className="text-[10px] text-muted">{r.createdAt.slice(0, 10)}</span></div><p className="mt-3 truncate text-sm font-medium">{r.customer || r.supplier || "Invoice conversion"}</p><p className="mt-1 text-xs text-muted">{r.total} {r.currency}</p></div>) : <div className="rounded-2xl border border-dashed border-line p-8 text-sm text-muted md:col-span-3">No conversions yet. Your corrected-document activity will appear here.</div>}</div>
+      </section>
+    </div>
+  </Shell>;
+}
