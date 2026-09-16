@@ -61,14 +61,15 @@ export async function signIn(
 
   // OAuth state is host-bound. Always start production Google sign-in on the
   // same canonical origin that receives the callback, even when the user opens
-  // a Vercel deployment/preview URL.
+  // a Vercel deployment/preview URL. Preserve the current page so the user
+  // can actually start OAuth after arriving on the canonical host.
   if (
     typeof window !== "undefined" &&
     import.meta.env.MODE === "production" &&
     !inLivePreview() &&
     window.location.origin !== PRODUCTION_ORIGIN
   ) {
-    const destination = new URL(callbackURL, PRODUCTION_ORIGIN);
+    const destination = new URL(window.location.pathname + window.location.search, PRODUCTION_ORIGIN);
     window.location.href = destination.toString();
     return;
   }
