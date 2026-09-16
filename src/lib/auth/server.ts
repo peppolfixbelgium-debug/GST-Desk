@@ -66,6 +66,19 @@ export const auth = betterAuth({
   secret: env("BETTER_AUTH_SECRET") ?? previewAuthSecret(),
   database,
   trustedOrigins,
+  rateLimit: {
+    enabled: true,
+    storage: "database",
+    modelName: "authRateLimit",
+    window: 60,
+    max: 100,
+    customRules: {
+      "/sign-in/email": { window: 60, max: 5 },
+      "/sign-up/email": { window: 60, max: 3 },
+      "/sign-in/social": { window: 60, max: 10 },
+      "/callback/google": { window: 60, max: 20 },
+    },
+  },
   account: {
     encryptOAuthTokens: true,
     accountLinking: {
